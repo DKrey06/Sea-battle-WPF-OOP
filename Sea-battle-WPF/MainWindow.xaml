@@ -5,8 +5,361 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Sea_battle_WPF"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Sea battle" 
+        Height="700" 
+        Width="900"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource PrimaryBrush}">
+
+    <Window.Resources>
+        <ResourceDictionary Source="Resources.xaml"/>
+    </Window.Resources>
+
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Верхняя панелька с лого и подключением -->
+        <DockPanel Grid.Row="0" 
+                   Background="{StaticResource SecondaryBrush}"
+                   Height="60"
+                   LastChildFill="False">
+
+            <!-- Лого и текст -->
+            <StackPanel Orientation="Horizontal" 
+                        VerticalAlignment="Center"
+                        DockPanel.Dock="Left">
+                <Image Source="/Images/FunCat4.png" 
+                       Width="50" 
+                       Height="50" 
+                       Margin="10,0,5,0"/>
+                <TextBlock Foreground="{StaticResource TextBrush}"
+                           FontFamily="Comic Sans MS"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           FontStyle="Italic"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap"
+                           MaxWidth="250"
+                           TextAlignment="Center" 
+                           Width="223">
+                    <TextBlock.Effect>
+                        <DropShadowEffect ShadowDepth="1" 
+                                          Color="{StaticResource AccentPurple}" 
+                                          BlurRadius="2" 
+                                          Opacity="0.6"/>
+                    </TextBlock.Effect><Run Text="Да победит "/><Run Language="ru-ru" Text=" "/><Run Text="же сильнейший                             в Мяурском сражении!"/></TextBlock>
+            </StackPanel>
+
+            <!-- Кнопка настроек -->
+            <Button Content="⚙" 
+                    FontSize="16"
+                    Width="40" 
+                    Height="40"
+                    Margin="0,0,10,0"
+                    DockPanel.Dock="Right"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Click="SettingsButton_Click">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+        </DockPanel>
+
+        <!-- Основное содержимое -->
+        <Grid Grid.Row="1" Margin="20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Левое поле -->
+            <Border Grid.Column="0" 
+                    Background="{StaticResource WaterBrush}"
+                    CornerRadius="10"
+                    Padding="15"
+                    BorderBrush="{StaticResource DarkBrush}"
+                    BorderThickness="2">
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Аватар и имя игрока -->
+                    <StackPanel Grid.Row="0"
+                                Orientation="Horizontal" 
+                                HorizontalAlignment="Center"
+                                Margin="0,0,0,15">
+                        <Image Source="Images/Piratcat1.png" 
+                               Width="40" 
+                               Height="40"
+                               Margin="0,0,10,0"/>
+                        <TextBlock Text="Кот" 
+                                   Style="{StaticResource HeaderText}"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Подпись поля -->
+                    <TextBlock Grid.Row="1"
+                               Text="Мое поле" 
+                               Foreground="{StaticResource TextBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,10"/>
+
+                    <!-- Игровое поле игрока -->
+                    <Viewbox Grid.Row="2"
+                             Stretch="Uniform" 
+                             MaxWidth="350" 
+                             MaxHeight="350" 
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center">
+                        <ItemsControl x:Name="PlayerField" 
+                                      HorizontalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Rows="10" Columns="10"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource CellStyle}">
+                                        <!-- Внутреннее содержимое ячейки -->
+                                        <Border Background="{Binding CellColor}"/>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Viewbox>
+                </Grid>
+            </Border>
+
+            <!-- Разделитель -->
+            <Rectangle Grid.Column="1" 
+                       Fill="{StaticResource AccentBrush}"
+                       Width="3" 
+                       RadiusX="2" 
+                       RadiusY="2"
+                       VerticalAlignment="Stretch"
+                       Margin="0,50"/>
+
+            <!-- Правое поле противника -->
+            <Border Grid.Column="2" 
+                    Background="{StaticResource WaterBrush}"
+                    CornerRadius="10"
+                    Padding="15"
+                    BorderBrush="{StaticResource DarkBrush}"
+                    BorderThickness="2">
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Аватар и имя противника -->
+                    <StackPanel Grid.Row="0"
+                                Orientation="Horizontal" 
+                                HorizontalAlignment="Center"
+                                Margin="0,0,0,15">
+                        <TextBlock Text="Противник" 
+                                   Style="{StaticResource HeaderText}"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,10,0"/>
+                        <Image Source="Images/Piratcat2.png" 
+                               Width="40" 
+                               Height="40"/>
+                    </StackPanel>
+
+                    <!-- Подпись поля -->
+                    <TextBlock Grid.Row="1"
+                               Text="Поле противника" 
+                               Foreground="{StaticResource TextBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,10"/>
+
+                    <!-- Игровое поле противника -->
+                    <Viewbox Grid.Row="2"
+                             Stretch="Uniform" 
+                             MaxWidth="350" 
+                             MaxHeight="350" 
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center">
+                        <ItemsControl x:Name="EnemyField" 
+                                      HorizontalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Rows="10" Columns="10"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource CellStyle}">
+                                        <Border Background="{Binding CellColor}">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsClickable}" Value="True">
+                                                            <Setter Property="Background" Value="{StaticResource WaterBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                        </Border>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Viewbox>
+                </Grid>
+            </Border>
+
+        </Grid>
+
+        <!-- Нижняя панелька управления -->
+        <Border Grid.Row="2" 
+                Background="{StaticResource SecondaryBrush}"
+                Height="90"
+                CornerRadius="10,10,0,0">
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Статус игры -->
+                <Border Grid.Column="0"
+                        Background="{StaticResource AccentBrush}"
+                        CornerRadius="8"
+                        BorderBrush="{StaticResource DarkBrush}"
+                        BorderThickness="1"
+                        Padding="15,8"
+                        Margin="20,0"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Left">
+                    <TextBlock x:Name="GameStatusText" 
+                               Text="Расставьте корабли"
+                               Foreground="{StaticResource TextBrush}"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"/>
+                </Border>
+
+                <!-- Кнопки управления -->
+                <StackPanel Grid.Column="1" 
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center">
+
+                    <Button x:Name="StartGameButton" 
+                            Content="Начать игру" 
+                            Style="{StaticResource ModernButton}"
+                            Width="110"
+                            Height="38"
+                            FontSize="13"
+                            Click="StartGame_Click"/>
+
+                    <Button x:Name="AutoArrangeButton" 
+                            Content="Расставить автоматически" 
+                            Style="{StaticResource ModernButton}"
+                            Width="180"
+                            Height="38"
+                            FontSize="13"
+                            Click="AutoArrange_Click"/>
+
+                    <Button x:Name="SurrenderButton" 
+                            Content="Сдаться" 
+                            Style="{StaticResource ModernButton}"
+                            Width="85"
+                            Height="38"
+                            FontSize="13"
+                            Click="Surrender_Click"/>
+
+                </StackPanel>
+
+                <!-- Легенда -->
+                <StackPanel Grid.Column="2" 
+                            Orientation="Vertical"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Margin="0,0,20,0">
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                        <Border Width="15" Height="15" Background="{StaticResource ShipBrush}" 
+                                BorderBrush="Black" BorderThickness="1" Margin="0,0,5,0"
+                                VerticalAlignment="Center"/>
+                        <TextBlock Text="Корабль" Foreground="{StaticResource TextBrush}" FontSize="12" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                        <Border Width="15" Height="15" Background="{StaticResource HitBrush}" 
+                                BorderBrush="Black" BorderThickness="1" Margin="0,0,5,0"
+                                VerticalAlignment="Center"/>
+                        <TextBlock Text="Попадание" Foreground="{StaticResource TextBrush}" FontSize="12" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="15" Height="15" Background="#A0D1E8" 
+                                BorderBrush="Black" BorderThickness="1" Margin="0,0,5,0"
+                                VerticalAlignment="Center"/>
+                        <TextBlock Text="Промах" Foreground="{StaticResource TextBrush}" FontSize="12" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                </StackPanel>
+
+            </Grid>
+        </Border>
+
+        <!-- Окно настроек (скрытое) -->
+        <Border x:Name="SettingsPanel"
+                Grid.RowSpan="3"
+                Background="#CCFFFFFF"
+                Visibility="Collapsed"
+                Panel.ZIndex="1000">
+            <Border Background="{StaticResource PrimaryBrush}"
+                    BorderBrush="{StaticResource DarkBrush}"
+                    BorderThickness="2"
+                    CornerRadius="15"
+                    Width="300"
+                    Height="200"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel Margin="20">
+                    <TextBlock Text="Настройки подключения" 
+                               Style="{StaticResource HeaderText}"
+                               Margin="0,0,0,15"/>
+                    <TextBlock Text="Ждем настройки окна" 
+                               Foreground="{StaticResource TextBrush}"
+                               HorizontalAlignment="Center"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"/>
+                    <Button Content="Закрыть" 
+                            Style="{StaticResource ModernButton}"
+                            Margin="0,20,0,0"
+                            Click="CloseSettings_Click"/>
+                </StackPanel>
+            </Border>
+        </Border>
 
     </Grid>
 </Window>

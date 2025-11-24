@@ -10,7 +10,7 @@
     <Color x:Key="WaterColor">#F0F8FF</Color>
     <Color x:Key="ShipColor">#5D6D7E</Color>
     <Color x:Key="HitColor">#FF6B6B</Color>
-    <Color x:Key="MissColor">#87CEEB</Color>
+    <Color x:Key="MissColor">#A0D1E8</Color>
 
     <!-- Кисти -->
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryBlue}"/>
