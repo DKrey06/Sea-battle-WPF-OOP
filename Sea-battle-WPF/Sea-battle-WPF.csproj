@@ -52,6 +52,8 @@
 
   <ItemGroup>
     <Folder Include="Fonts\" />
+    <Folder Include="AI\" />
+    <Folder Include="Views\" />
   </ItemGroup>
 
 </Project>

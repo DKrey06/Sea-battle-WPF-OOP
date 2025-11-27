@@ -13,7 +13,7 @@ namespace Sea_battle_WPF
 {
     public partial class MainWindow : Window
     {
-        private bool isMultiplayer;
+         //private bool isMultiplayer;
 
         public class CellData
         {
@@ -21,10 +21,9 @@ namespace Sea_battle_WPF
             public bool IsClickable { get; set; }
         }
 
-        public MainWindow(bool multiplayer)
+        public MainWindow()
         {
             InitializeComponent();
-            isMultiplayer = multiplayer;
             InitializeGameFields();
         }
 

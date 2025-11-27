@@ -23,16 +23,14 @@ namespace Sea_battle_WPF
 
         private void StartSinglePlayer_Click(object sender, RoutedEventArgs e)
         {
-            MainWindow mainWindow = new MainWindow(false); //false - игра с компьютером
+            var mainWindow = new MainWindow();
             mainWindow.Show();
             this.Close();
         }
 
         private void StartMultiplayer_Click(object sender, RoutedEventArgs e)
         {
-            MainWindow mainWindow = new MainWindow(true); //true - сетевая игра
-            mainWindow.Show();
-            this.Close();
+            MessageBox.Show("Сетевую игру добавим позже :(", ":(", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)
