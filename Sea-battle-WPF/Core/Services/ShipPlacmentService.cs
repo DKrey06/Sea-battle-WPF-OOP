@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Shapes;
 
 namespace Sea_battle_WPF.Core.Services
 {
@@ -14,6 +15,8 @@ namespace Sea_battle_WPF.Core.Services
 
         public void PlaceShipAutomatically(GameField field)
         {
+            ClearField(field);
+
             int[] shipSizes = { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
 
             foreach (int size in shipSizes)
@@ -39,6 +42,18 @@ namespace Sea_battle_WPF.Core.Services
                 }
                 attempts++;
             }
+        }
+        public void ClearField(GameField field)
+        {
+            foreach (var ship in field.Ships.ToList())
+            {
+                foreach (var cell in ship.Cells)
+                {
+                    cell.State = CellState.Empty;
+                    cell.Ship = null;
+                }
+            }
+            field.Ships.Clear();
         }
         public bool ValidateManualPlacement(GameField field, List<Ship> ships)
         {

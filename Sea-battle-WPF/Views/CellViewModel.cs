@@ -63,7 +63,7 @@ namespace Sea_battle_WPF.ViewModels
             }
             else
             {
-                IsClickable = false; // Свое поле не кликабельно
+                IsClickable = false; 
             }
         }
 
