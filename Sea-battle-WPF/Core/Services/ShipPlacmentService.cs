@@ -14,9 +14,14 @@ namespace Sea_battle_WPF.Core.Services
 
         public void PlaceShipAutomatically(GameField field)
         {
+            int[] shipSizes = { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
 
+            foreach (int size in shipSizes)
+            {
+                PlaceShipRandomly(field, size);
+            }
         }
-        public void PlaceSipRandomly(GameField field, int size) 
+        public void PlaceShipRandomly(GameField field, int size) 
         {
             bool placed = false;
             int attempts = 0;

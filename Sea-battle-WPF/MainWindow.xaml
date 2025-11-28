@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Sea_battle_WPF"
+        xmlns:local="clr-namespace:Sea_battle_WPF" xmlns:viewmodels="clr-namespace:Sea_battle_WPF.ViewModels" d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
         mc:Ignorable="d"
         Title="Sea battle" 
         Height="700" 
@@ -130,6 +130,7 @@
                              HorizontalAlignment="Center"
                              VerticalAlignment="Center">
                         <ItemsControl x:Name="PlayerField" 
+                                      ItemsSource="{Binding PlayerCells}"
                                       HorizontalAlignment="Center">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -202,6 +203,7 @@
                              HorizontalAlignment="Center"
                              VerticalAlignment="Center">
                         <ItemsControl x:Name="EnemyField" 
+                                      ItemsSource="{Binding EnemyCells}"
                                       HorizontalAlignment="Center">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -256,7 +258,7 @@
                         VerticalAlignment="Center"
                         HorizontalAlignment="Left">
                     <TextBlock x:Name="GameStatusText" 
-                               Text="Расставьте корабли"
+                               Text="{Binding GameStatus}"
                                Foreground="{StaticResource TextBrush}"
                                FontSize="16"
                                FontWeight="Bold"

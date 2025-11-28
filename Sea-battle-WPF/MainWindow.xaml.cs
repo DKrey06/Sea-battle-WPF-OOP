@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using Sea_battle_WPF.ViewModels;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -24,16 +25,7 @@ namespace Sea_battle_WPF
         public MainWindow()
         {
             InitializeComponent();
-            InitializeGameFields();
-        }
-
-        private void InitializeGameFields()
-        {
-            for (int i = 0; i < 100; i++)
-            {
-                PlayerField.Items.Add(new CellData { CellColor = Brushes.Transparent, IsClickable = false });
-                EnemyField.Items.Add(new CellData { CellColor = Brushes.Transparent, IsClickable = true });
-            }
+            DataContext = new MainViewModel();
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
@@ -48,16 +40,27 @@ namespace Sea_battle_WPF
 
         private void StartGame_Click(object sender, RoutedEventArgs e)
         {
-            GameStatusText.Text = "Ваш ход";
-            //Здесь будет логика начала игры
+            var viewModel = DataContext as MainViewModel;
+            if (viewModel != null)
+            {
+                if (viewModel.StartGameCommand.CanExecute(null))
+                {
+                    viewModel.StartGameCommand.Execute(null);
+                }
+            }
         }
 
         private void AutoArrange_Click(object sender, RoutedEventArgs e)
         {
-            GameStatusText.Text = "Корабли расставлены";
-            //Здесь будет логика автоматической расстановки кораблей
+            var viewModel = DataContext as MainViewModel;
+            if (viewModel != null)
+            {
+                if (viewModel.AutoArrangeCommand.CanExecute(null))
+                {
+                    viewModel.AutoArrangeCommand.Execute(null);
+                }
+            }
         }
-
         private void Surrender_Click(object sender, RoutedEventArgs e)
         {
             MessageBoxResult result = MessageBox.Show("Вы уверены, что хотите сдаться?", "Сдаться",
@@ -66,7 +69,6 @@ namespace Sea_battle_WPF
             if (result == MessageBoxResult.Yes)
             {
                 GameStatusText.Text = "Вы сдались";
-                //Здесь будет логика завершения игры
             }
         }
     }
