@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Sea_battle_WPF" xmlns:viewmodels="clr-namespace:Sea_battle_WPF.ViewModels" d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
         Title="Sea battle" 
         Height="700" 
@@ -196,15 +197,16 @@
                                Margin="0,0,0,10"/>
 
                     <!-- Игровое поле противника -->
+                    <!-- Игровое поле противника -->
                     <Viewbox Grid.Row="2"
-                             Stretch="Uniform" 
-                             MaxWidth="350" 
-                             MaxHeight="350" 
-                             HorizontalAlignment="Center"
-                             VerticalAlignment="Center">
+         Stretch="Uniform" 
+         MaxWidth="350" 
+         MaxHeight="350" 
+         HorizontalAlignment="Center"
+         VerticalAlignment="Center">
                         <ItemsControl x:Name="EnemyField" 
-                                      ItemsSource="{Binding EnemyCells}"
-                                      HorizontalAlignment="Center">
+                  ItemsSource="{Binding EnemyCells}"
+                  HorizontalAlignment="Center">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <UniformGrid Rows="10" Columns="10"/>
@@ -214,15 +216,14 @@
                                 <DataTemplate>
                                     <Border Style="{StaticResource CellStyle}">
                                         <Border Background="{Binding CellColor}">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsClickable}" Value="True">
-                                                            <Setter Property="Background" Value="{StaticResource WaterBrush}"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
+                                            <i:Interaction.Triggers>
+                                                <!-- ДОБАВИТЬ ЭТОТ БЛОК -->
+                                                <i:EventTrigger EventName="MouseLeftButtonDown">
+                                                    <i:InvokeCommandAction 
+                                    Command="{Binding DataContext.CellClickCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                    CommandParameter="{Binding}"/>
+                                                </i:EventTrigger>
+                                            </i:Interaction.Triggers>
                                         </Border>
                                     </Border>
                                 </DataTemplate>
@@ -295,7 +296,7 @@
                             Width="85"
                             Height="38"
                             FontSize="13"
-                            Click="Surrender_Click"/>
+                            Command="{Binding SurrenderCommand}"/>
 
                 </StackPanel>
 

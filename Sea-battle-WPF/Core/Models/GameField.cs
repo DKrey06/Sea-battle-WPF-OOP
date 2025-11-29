@@ -89,6 +89,7 @@ namespace Sea_battle_WPF.Core.Models
             if (cell.State == CellState.Ship)
             {
                 cell.State = CellState.Hit;
+
                 if (cell.Ship.IsSunk)
                 {
                     foreach (var shipCell in cell.Ship.Cells)
@@ -97,6 +98,7 @@ namespace Sea_battle_WPF.Core.Models
                     }
                     return CellState.Sunk;
                 }
+                return CellState.Hit;
             }
             else if (cell.State == CellState.Empty)
             {

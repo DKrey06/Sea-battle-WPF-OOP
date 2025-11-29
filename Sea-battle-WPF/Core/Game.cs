@@ -38,5 +38,12 @@ namespace Sea_battle_WPF.Core
             CurrentPhase = GamePhase.PlayerTurn;
             GameStateChanged?.Invoke(CurrentPhase, "Игра началась!");
         }
+        
+        public void ResetGame()
+        {
+            PlayerField = new GameField();
+            EnemyField = new GameField();
+            CurrentPhase = GamePhase.Setup;
+        }
     }
 }

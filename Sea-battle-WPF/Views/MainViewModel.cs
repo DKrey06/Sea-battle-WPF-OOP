@@ -6,6 +6,7 @@ using SeaBattle.Presentation.ViewModels;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -40,6 +41,7 @@ namespace Sea_battle_WPF.ViewModels
         public ICommand AutoArrangeCommand { get; }
         public ICommand StartGameCommand { get; }
         public ICommand CellClickCommand { get; }
+        public ICommand SurrenderCommand { get; }
 
         public MainViewModel()
         {
@@ -54,6 +56,7 @@ namespace Sea_battle_WPF.ViewModels
             AutoArrangeCommand = new RelayCommand(AutoArrangeExecute, () => CanArrangeShips);
             StartGameCommand = new RelayCommand(StartGameExecute, () => CanStartGame);
             CellClickCommand = new RelayCommand<CellViewModel>(CellClickExecute);
+            SurrenderCommand = new RelayCommand(SurrenderExecute);
         }
 
         private void InitializeCells()
@@ -96,7 +99,7 @@ namespace Sea_battle_WPF.ViewModels
 
         private void CellClickExecute(CellViewModel cellVM)
         {
-            if (!IsGameStarted || !cellVM.IsClickable) return;
+            if (!IsGameStarted || !cellVM.IsClickable || _game.EnemyField.AllShipsSunk) return;
 
             var result = _game.EnemyField.Shoot(cellVM.X, cellVM.Y);
             cellVM.UpdateFromModel();
@@ -105,10 +108,30 @@ namespace Sea_battle_WPF.ViewModels
             {
                 GameStatus = "Вы победили!";
                 DisableAllEnemyCells();
+                IsGameStarted = false;
+                MessageBoxResult _result = MessageBox.Show("Хотите сыграть снова?", "Победа", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (_result == MessageBoxResult.Yes)
+                {
+                    GameStatus = "Расставьте корабли";
+                    ResetGame();
+                }
+                OnPropertyChanged(nameof(IsGameStarted));
+                OnPropertyChanged(nameof(CanArrangeShips));
+                return; 
             }
+
             else if (result == CellState.Miss)
             {
                 GameStatus = "Ход противника";
+            }
+            else if (result == CellState.Hit || result == CellState.Sunk) 
+            {
+                GameStatus = "Попадание! Продолжайте";
+
+                if (result == CellState.Sunk)
+                {
+                    UpdateEnemyCells();
+                }
             }
         }
 
@@ -130,6 +153,8 @@ namespace Sea_battle_WPF.ViewModels
 
         private void UpdateEnemyCellsClickability()
         {
+            if (_game.EnemyField.AllShipsSunk) return;
+
             foreach (var cellVM in EnemyCells)
             {
                 cellVM.UpdateClickability(IsGameStarted);
@@ -144,6 +169,37 @@ namespace Sea_battle_WPF.ViewModels
             }
         }
 
+        private void SurrenderExecute()
+        {
+            if (!IsGameStarted) return;
+
+            var result = MessageBox.Show("Вы уверены, что хотите сдаться?", "Сдаться", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.Yes)
+            {
+                GameStatus = "Вы сдались";
+                ResetGame();
+
+            }
+        }
+        public void ResetGame()
+        {
+            _game.ResetGame();
+            _game.AutoArrangeEnemyShips();
+            PlayerCells.Clear();
+            EnemyCells.Clear();
+
+            UpdatePlayerCells();
+            UpdateEnemyCells();
+
+            InitializeCells();
+            IsGameStarted = false;
+            GameStatus = "Расставьте корабли";
+
+            OnPropertyChanged(nameof(IsGameStarted));
+            OnPropertyChanged(nameof(CanArrangeShips));
+            OnPropertyChanged(nameof(CanStartGame));
+
+        }
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
