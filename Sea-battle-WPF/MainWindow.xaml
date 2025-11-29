@@ -123,16 +123,15 @@
                                HorizontalAlignment="Center"
                                Margin="0,0,0,10"/>
 
-                    <!-- Игровое поле игрока -->
                     <Viewbox Grid.Row="2"
-                             Stretch="Uniform" 
-                             MaxWidth="350" 
-                             MaxHeight="350" 
-                             HorizontalAlignment="Center"
-                             VerticalAlignment="Center">
+         Stretch="Uniform" 
+         MaxWidth="350" 
+         MaxHeight="350" 
+         HorizontalAlignment="Center"
+         VerticalAlignment="Center">
                         <ItemsControl x:Name="PlayerField" 
-                                      ItemsSource="{Binding PlayerCells}"
-                                      HorizontalAlignment="Center">
+                  ItemsSource="{Binding PlayerCells}"
+                  HorizontalAlignment="Center">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <UniformGrid Rows="10" Columns="10"/>
@@ -141,7 +140,6 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border Style="{StaticResource CellStyle}">
-                                        <!-- Внутреннее содержимое ячейки -->
                                         <Border Background="{Binding CellColor}"/>
                                     </Border>
                                 </DataTemplate>
@@ -197,7 +195,6 @@
                                Margin="0,0,0,10"/>
 
                     <!-- Игровое поле противника -->
-                    <!-- Игровое поле противника -->
                     <Viewbox Grid.Row="2"
          Stretch="Uniform" 
          MaxWidth="350" 
@@ -217,7 +214,6 @@
                                     <Border Style="{StaticResource CellStyle}">
                                         <Border Background="{Binding CellColor}">
                                             <i:Interaction.Triggers>
-                                                <!-- ДОБАВИТЬ ЭТОТ БЛОК -->
                                                 <i:EventTrigger EventName="MouseLeftButtonDown">
                                                     <i:InvokeCommandAction 
                                     Command="{Binding DataContext.CellClickCommand, RelativeSource={RelativeSource AncestorType=Window}}" 

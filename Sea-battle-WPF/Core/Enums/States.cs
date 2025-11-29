@@ -24,6 +24,7 @@ namespace Sea_battle_WPF.Core.Enums
         PlayerTurn,
         ComputerTurn,
         GameOver,
-        Setup
+        Setup,
+        EnemyTurn
     }
 }

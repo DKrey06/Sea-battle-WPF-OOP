@@ -53,6 +53,7 @@ namespace Sea_battle_WPF.ViewModels
         public void UpdateFromModel()
         {
             CellColor = GetCellColor(_cell.State);
+            OnPropertyChanged(nameof(CellColor));
         }
 
         public void UpdateClickability(bool isGameStarted)

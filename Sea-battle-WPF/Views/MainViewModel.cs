@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using Sea_battle_WPF.Core.GameAI;
 
 namespace Sea_battle_WPF.ViewModels
 {
@@ -123,7 +124,18 @@ namespace Sea_battle_WPF.ViewModels
             else if (result == CellState.Miss)
             {
                 GameStatus = "Ход противника";
+                _game.CurrentPhase = GamePhase.EnemyTurn;
+                DisableAllEnemyCells();
+
+                Task.Delay(500).ContinueWith(_ =>
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        MakeAIMove();
+                    });
+                });
             }
+
             else if (result == CellState.Hit || result == CellState.Sunk) 
             {
                 GameStatus = "Попадание! Продолжайте";
@@ -134,7 +146,43 @@ namespace Sea_battle_WPF.ViewModels
                 }
             }
         }
+        private void MakeAIMove()
+        {
+            _game.MakeAIMove();
+            UpdatePlayerCells();
 
+            if (_game.PlayerField.AllShipsSunk)
+            {
+                GameStatus = "Вы проиграли!";
+                IsGameStarted = false;
+                MessageBoxResult _result = MessageBox.Show("Хотите сыграть снова?", "Поражение", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (_result == MessageBoxResult.Yes)
+                {
+                    GameStatus = "Расставьте корабли";
+                    ResetGame();
+                }
+                OnPropertyChanged(nameof(IsGameStarted));
+                OnPropertyChanged(nameof(CanArrangeShips));
+            }
+            else
+            {
+                if (_game.LastAIMoveWasHit)
+                {
+                    Task.Delay(500).ContinueWith(_ =>
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            MakeAIMove(); 
+                        });
+                    });
+                }
+                else
+                {
+                    GameStatus = "Ваш ход";
+                    UpdateEnemyCellsClickability();
+                }
+            }
+        }
         private void UpdatePlayerCells()
         {
             foreach (var cellVM in PlayerCells)
@@ -188,10 +236,10 @@ namespace Sea_battle_WPF.ViewModels
             PlayerCells.Clear();
             EnemyCells.Clear();
 
+            InitializeCells();
             UpdatePlayerCells();
             UpdateEnemyCells();
-
-            InitializeCells();
+            
             IsGameStarted = false;
             GameStatus = "Расставьте корабли";
 
