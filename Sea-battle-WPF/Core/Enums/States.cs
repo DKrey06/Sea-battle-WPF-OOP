@@ -27,4 +27,15 @@ namespace Sea_battle_WPF.Core.Enums
         Setup,
         EnemyTurn
     }
+    public enum AILevel
+    {
+        Easy,
+        Hard
+    }
+    public enum AIMode
+    {
+        RandomSearch,
+        TargetTracking,
+        FinishShip
+    }
 }

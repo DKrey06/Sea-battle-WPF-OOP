@@ -17,6 +17,7 @@ namespace Sea_battle_WPF.ViewModels
     {
         private readonly Game _game;
         private string _gameStatus;
+        private AILevel _selectedAILevel = AILevel.Hard;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -32,9 +33,48 @@ namespace Sea_battle_WPF.ViewModels
             }
         }
 
+        public string SelectedAILevelDisplay
+        {
+            get
+            {
+                return SelectedAILevel switch
+                {
+                    AILevel.Easy => "Простой",
+                    AILevel.Hard => "Умный",
+                    _ => SelectedAILevel.ToString()
+                };
+            }
+        }
+
+        public AILevel SelectedAILevel
+        {
+            get => _selectedAILevel;
+
+            set
+            {
+                if (_selectedAILevel != value)
+                {
+                    _selectedAILevel = value;
+                    _game.SetAILevel(value);
+                    OnPropertyChanged(nameof(IsEasyAI));
+                    OnPropertyChanged(nameof(IsSmartAI));
+                    OnPropertyChanged(nameof(SelectedAILevelDisplay));
+                    UpdateAISettenigsText();
+                }
+            }
+        }
+        private void UpdateAISettenigsText()
+        {
+            OnPropertyChanged(nameof(IsEasyAI));
+            OnPropertyChanged(nameof(IsSmartAI));
+        }
+
+        public bool IsEasyAI => SelectedAILevel == AILevel.Easy;
+        public bool IsSmartAI => SelectedAILevel == AILevel.Hard;
         public bool IsGameStarted { get; private set; }
         public bool CanStartGame => !IsGameStarted && _game.PlayerField.Ships.Count == 10;
         public bool CanArrangeShips => !IsGameStarted;
+        public bool CanChangeAILevel => !IsGameStarted;
 
         public ObservableCollection<CellViewModel> PlayerCells { get; } = new ObservableCollection<CellViewModel>();
         public ObservableCollection<CellViewModel> EnemyCells { get; } = new ObservableCollection<CellViewModel>();
@@ -43,6 +83,8 @@ namespace Sea_battle_WPF.ViewModels
         public ICommand StartGameCommand { get; }
         public ICommand CellClickCommand { get; }
         public ICommand SurrenderCommand { get; }
+        public ICommand SetEasyAICommand { get; }
+        public ICommand SetSmartAICommand { get; }
 
         public MainViewModel()
         {
@@ -58,6 +100,8 @@ namespace Sea_battle_WPF.ViewModels
             StartGameCommand = new RelayCommand(StartGameExecute, () => CanStartGame);
             CellClickCommand = new RelayCommand<CellViewModel>(CellClickExecute);
             SurrenderCommand = new RelayCommand(SurrenderExecute);
+            SetEasyAICommand = new RelayCommand(() => SelectedAILevel = AILevel.Easy, () => CanChangeAILevel);
+            SetSmartAICommand = new RelayCommand(() => SelectedAILevel = AILevel.Hard, () => CanChangeAILevel);
         }
 
         private void InitializeCells()
@@ -246,6 +290,9 @@ namespace Sea_battle_WPF.ViewModels
             OnPropertyChanged(nameof(IsGameStarted));
             OnPropertyChanged(nameof(CanArrangeShips));
             OnPropertyChanged(nameof(CanStartGame));
+            OnPropertyChanged(nameof(CanChangeAILevel));
+            OnPropertyChanged(nameof(IsEasyAI));
+            OnPropertyChanged(nameof(IsSmartAI));
 
         }
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)

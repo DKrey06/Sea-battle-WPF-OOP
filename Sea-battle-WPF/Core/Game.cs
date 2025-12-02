@@ -11,6 +11,8 @@ namespace Sea_battle_WPF.Core
         public GameField EnemyField { get; private set; }
         public GamePhase CurrentPhase { get; set; }
         public bool LastAIMoveWasHit { get; private set; }
+        public CellState LastAIShotResult { get; private set; }
+        public AILevel CurrentAILevel { get; private set; }
 
         private readonly ShipPlacmentService _shipPlacmentService;
         private AIBase _enemyAI;
@@ -22,10 +24,26 @@ namespace Sea_battle_WPF.Core
             PlayerField = new GameField();
             EnemyField = new GameField();
             _shipPlacmentService = shipPlacementService ?? new ShipPlacmentService();
-            _enemyAI = new BakaAI(PlayerField);
+
+            CurrentAILevel = AILevel.Hard;
+            _enemyAI = new SmartAI(PlayerField);
             CurrentPhase = GamePhase.Setup;
         }
 
+        public void SetAILevel(AILevel level)
+        {
+            if (CurrentAILevel == level) return;
+            CurrentAILevel = level;
+            switch (level)
+            {
+                case AILevel.Easy:
+                    _enemyAI = new BakaAI(PlayerField);
+                    break;
+                case AILevel.Hard:
+                    _enemyAI = new SmartAI(PlayerField);
+                    break;
+            }
+        }
         public void AutoArrangePlayerShips()
         {
             _shipPlacmentService.PlaceShipAutomatically(PlayerField);
@@ -46,7 +64,11 @@ namespace Sea_battle_WPF.Core
                 var result = PlayerField.Shoot(x, y);
 
                 LastAIMoveWasHit = (result == CellState.Hit || result == CellState.Sunk);
-
+                
+                if (_enemyAI is SmartAI smartAI)
+                {
+                    smartAI.ProcessShotResult(x, y, result);
+                }
                 if (!LastAIMoveWasHit)
                 {
                     CurrentPhase = GamePhase.PlayerTurn;
@@ -65,7 +87,17 @@ namespace Sea_battle_WPF.Core
         {
             PlayerField = new GameField();
             EnemyField = new GameField();
-            _enemyAI = new BakaAI(PlayerField);
+
+            switch (CurrentAILevel)
+            {
+                case AILevel.Easy:
+                    _enemyAI = new BakaAI(PlayerField);
+                    break;
+                case AILevel.Hard:
+                    _enemyAI = new SmartAI(PlayerField);
+                    break;
+            }
+
             CurrentPhase = GamePhase.Setup;
         }
     }

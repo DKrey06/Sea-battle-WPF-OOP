@@ -21,6 +21,10 @@ namespace Sea_battle_WPF.Core.GameAI
         }
         public abstract (int x, int y) MakeMove();
 
+        public virtual void ProcessShotResult(int x, int y, CellState result)
+        {
+
+        }
         public virtual void Reset()
         {
 
