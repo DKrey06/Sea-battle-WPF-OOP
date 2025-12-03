@@ -32,6 +32,16 @@ namespace Sea_battle_WPF.Core.Enums
         Easy,
         Hard
     }
+    public enum GameMode
+    {
+        SinglePlayer,     
+        HotSeat          
+    }
+    public enum HotSeatPlayer
+    {
+        Player1,
+        Player2
+    }
     public enum AIMode
     {
         RandomSearch,

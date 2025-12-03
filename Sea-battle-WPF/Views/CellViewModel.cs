@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using System.Windows;
+using System.Windows.Input;
 
 namespace Sea_battle_WPF.ViewModels
 {
@@ -13,6 +14,9 @@ namespace Sea_battle_WPF.ViewModels
         private readonly bool _isEnemyField;
         private Brush _cellColor;
         private bool _isClickable;
+        private bool _isHighlighted;
+        private bool _isShipPlacementValid = true;
+        private bool _isDragOver;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -35,6 +39,39 @@ namespace Sea_battle_WPF.ViewModels
             set
             {
                 _isClickable = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool IsHighlighted
+        {
+            get => _isHighlighted;
+            set
+            {
+                _isHighlighted = value;
+                UpdateVisuals();
+                OnPropertyChanged();
+            }
+        }
+
+        public bool IsShipPlacementValid
+        {
+            get => _isShipPlacementValid;
+            set
+            {
+                _isShipPlacementValid = value;
+                UpdateVisuals();
+                OnPropertyChanged();
+            }
+        }
+
+        public bool IsDragOver
+        {
+            get => _isDragOver;
+            set
+            {
+                _isDragOver = value;
+                UpdateVisuals();
                 OnPropertyChanged();
             }
         }
@@ -64,7 +101,30 @@ namespace Sea_battle_WPF.ViewModels
             }
             else
             {
-                IsClickable = false; 
+                IsClickable = false;
+            }
+        }
+
+        private void UpdateVisuals()
+        {
+            if (!_isEnemyField && IsHighlighted)
+            {
+                if (!IsShipPlacementValid)
+                {
+                    CellColor = Brushes.LightPink;
+                }
+                else if (IsDragOver)
+                {
+                    CellColor = Brushes.LightGreen; 
+                }
+                else
+                {
+                    CellColor = Brushes.LightYellow; 
+                }
+            }
+            else
+            {
+                UpdateFromModel();
             }
         }
 
@@ -91,6 +151,13 @@ namespace Sea_battle_WPF.ViewModels
                     _ => Brushes.Transparent
                 };
             }
+        }
+
+        public void ClearHighlight()
+        {
+            IsHighlighted = false;
+            IsDragOver = false;
+            UpdateFromModel();
         }
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)

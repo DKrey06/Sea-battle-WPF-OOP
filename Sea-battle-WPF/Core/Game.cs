@@ -1,7 +1,8 @@
 ﻿using Sea_battle_WPF.Core.Enums;
+using Sea_battle_WPF.Core.GameAI;
 using Sea_battle_WPF.Core.Models;
 using Sea_battle_WPF.Core.Services;
-using Sea_battle_WPF.Core.GameAI;
+using System.Windows.Shapes;
 
 namespace Sea_battle_WPF.Core
 {
@@ -82,11 +83,12 @@ namespace Sea_battle_WPF.Core
             CurrentPhase = GamePhase.PlayerTurn;
             GameStateChanged?.Invoke(CurrentPhase, "Игра началась!");
         }
-        
+
         public void ResetGame()
         {
-            PlayerField = new GameField();
-            EnemyField = new GameField();
+
+            PlayerField.ClearField();
+            EnemyField.ClearField();
 
             switch (CurrentAILevel)
             {

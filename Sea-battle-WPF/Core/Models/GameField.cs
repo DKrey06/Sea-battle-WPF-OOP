@@ -107,6 +107,19 @@ namespace Sea_battle_WPF.Core.Models
             }
             return cell.State;
         }
+        public void ClearField()
+        {
+            for (int x = 0; x < Size; x++)
+            {
+                for (int y = 0; y < Size; y++)
+                {
+                    Cells[x, y].State = CellState.Empty;
+                    Cells[x, y].Ship = null;
+                }
+            }
+
+            Ships.Clear();
+        }
     }
     
 }
