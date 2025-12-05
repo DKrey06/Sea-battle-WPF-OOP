@@ -308,10 +308,59 @@ namespace SeaBattle.Server
                 client.SendMessage(JsonConvert.SerializeObject(player2Message));
 
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игрок присоединился к комнате {roomId}. Комната заполнена!");
+
+                // ОТПРАВЛЯЕМ НОВОМУ ИГРОКУ СОСТОЯНИЕ КОМНАТЫ
+                SendRoomStateToPlayer(client, roomId, room);
             }
             else
             {
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Не удалось присоединиться к комнате {roomId} (не найдена или заполнена)");
+            }
+        }
+
+        private void SendRoomStateToPlayer(ClientHandler client, string roomId, GameRoom room)
+        {
+            try
+            {
+                // Отправляем информацию о готовности другого игрока
+                foreach (var playerReady in room.GameState.PlayersReady)
+                {
+                    if (playerReady.Key != client.ClientId && playerReady.Value)
+                    {
+                        var readyMessage = new GameMessage
+                        {
+                            Type = "PLAYER_READY",
+                            RoomId = roomId,
+                            PlayerId = playerReady.Key,
+                            Data = playerReady.Key
+                        };
+
+                        client.SendMessage(JsonConvert.SerializeObject(readyMessage));
+                        Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Отправлено состояние готовности игрока {playerReady.Key.Substring(0, 8)} новому игроку");
+                    }
+                }
+
+                // Отправляем информацию о расставленных кораблях другого игрока
+                foreach (var shipsPlaced in room.GameState.ShipsPlaced)
+                {
+                    if (shipsPlaced.Key != client.ClientId && shipsPlaced.Value)
+                    {
+                        var shipsMessage = new GameMessage
+                        {
+                            Type = "SHIPS_PLACED_NOTIFY",
+                            RoomId = roomId,
+                            PlayerId = shipsPlaced.Key,
+                            Data = shipsPlaced.Key
+                        };
+
+                        client.SendMessage(JsonConvert.SerializeObject(shipsMessage));
+                        Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Отправлено состояние кораблей игрока {shipsPlaced.Key.Substring(0, 8)} новому игроку");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Ошибка отправки состояния комнаты: {ex.Message}");
             }
         }
 
@@ -346,6 +395,17 @@ namespace SeaBattle.Server
                 room.GameState.ShipsPlaced[client.ClientId] = true;
 
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игрок {client.ClientId.Substring(0, 8)} расставил корабли в комнате {roomId}");
+
+                // Отправляем уведомление обоим игрокам о расстановке кораблей
+                var shipsMessage = new GameMessage
+                {
+                    Type = "SHIPS_PLACED_NOTIFY",
+                    RoomId = roomId,
+                    PlayerId = client.ClientId,
+                    Data = client.ClientId
+                };
+
+                BroadcastToRoom(roomId, shipsMessage);
 
                 // Проверяем, можно ли начать игру
                 CheckAndStartGame(roomId, room);
