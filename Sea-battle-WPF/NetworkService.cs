@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
@@ -27,6 +27,9 @@ namespace Sea_battle_WPF.Core.Services
         public event Action<ShotResult> OnShotResult;
         public event Action<string> OnGameOver;
         public event Action<string> OnError;
+
+        public event Action<string> OnPlayerReady;
+        public event Action<string> OnPlayerDisconnected;
 
         public async Task<bool> Connect(string serverIp = "127.0.0.1", int port = 8888)
         {
@@ -100,6 +103,14 @@ namespace Sea_battle_WPF.Core.Services
 
                     case "PLAYER_JOINED":
                         OnPlayerJoined?.Invoke(gameMessage.Data);
+                        break;
+
+                    case "PLAYER_READY":
+                        OnPlayerReady?.Invoke(gameMessage.Data);
+                        break;
+
+                    case "PLAYER_DISCONNECTED":
+                        OnPlayerDisconnected?.Invoke(gameMessage.Data);
                         break;
 
                     case "GAME_STARTED":

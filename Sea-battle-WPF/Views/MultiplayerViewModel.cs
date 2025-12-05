@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -11,6 +11,7 @@ using Sea_battle_WPF.Core.Enums;
 using Sea_battle_WPF.Core.Models;
 using Sea_battle_WPF.Core.Services;
 using SeaBattle.Presentation.ViewModels;
+using System.Threading.Tasks;
 
 namespace Sea_battle_WPF.ViewModels
 {
@@ -27,6 +28,7 @@ namespace Sea_battle_WPF.ViewModels
         private bool _isReady;
         private bool _isOpponentReady;
         private bool _isGameStarted;
+        private string _opponentId;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -180,8 +182,40 @@ namespace Sea_battle_WPF.ViewModels
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
+                    _opponentId = playerId;
                     OpponentStatus = "Соперник присоединился";
                     GameStatus = "Соперник найден. Расставьте корабли и нажмите 'Готов'";
+                });
+            };
+
+            _networkService.OnPlayerReady += (playerId) =>
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (playerId == _opponentId)
+                    {
+                        IsOpponentReady = true;
+                        OpponentStatus = "Соперник готов!";
+                        GameStatus = "Оба игрока готовы! Игра начнется, когда все расставят корабли...";
+                    }
+                });
+            };
+
+
+            _networkService.OnPlayerDisconnected += (playerId) =>
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (playerId == _opponentId)
+                    {
+                        OpponentStatus = "Соперник отключился";
+                        GameStatus = "Соперник покинул игру";
+                        IsOpponentReady = false;
+                        IsGameStarted = false;
+
+                        MessageBox.Show("Соперник отключился от игры.", "Игра прервана",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
                 });
             };
 
@@ -226,7 +260,7 @@ namespace Sea_battle_WPF.ViewModels
                 {
                     if (shot.PlayerId == _networkService.PlayerId)
                     {
-                        // Наш выстрел
+
                         var cell = _game.EnemyField.Cells[shot.X, shot.Y];
                         cell.State = shot.IsHit ? CellState.Hit : CellState.Miss;
 
@@ -237,7 +271,7 @@ namespace Sea_battle_WPF.ViewModels
                     }
                     else
                     {
-                        // Выстрел противника
+
                         var cell = _game.PlayerField.Cells[shot.X, shot.Y];
                         if (shot.IsHit)
                         {
@@ -377,8 +411,10 @@ namespace Sea_battle_WPF.ViewModels
             IsGameStarted = false;
             IsReady = false;
             IsOpponentReady = false;
+            _opponentId = null;
             RoomId = "";
             GameStatus = "Отключено от сервера";
+            OpponentStatus = "Ожидание соперника...";
         }
 
         private void InitializeCells()
