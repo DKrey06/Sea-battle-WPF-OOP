@@ -119,12 +119,13 @@
                             Margin="0,0,0,10"
                             IsEnabled="{Binding IsConnected, Converter={StaticResource InverseBooleanConverter}}"/>
 
+                    <!-- КНОПКА СОЗДАНИЯ КОМНАТЫ - ДОБАВЛЯЕМ IsEnabled -->
                     <Button Content="Создать комнату"
                             Command="{Binding CreateRoomCommand}"
                             Style="{StaticResource ModernButton}"
                             Height="35"
                             Margin="0,0,0,10"
-                            IsEnabled="{Binding IsConnected}"/>
+                            IsEnabled="{Binding CanCreateRoom}"/>
 
                     <!-- Ввод ID комнаты -->
                     <TextBlock Text="ID комнаты для присоединения:"
@@ -133,15 +134,17 @@
 
                     <TextBox x:Name="RoomIdInput"
                      Style="{StaticResource ModernTextBox}"
-                     Margin="0,0,0,5"/>
+                     Margin="0,0,0,5"
+                     IsEnabled="{Binding CanJoinRoom}"/>
 
+                    <!-- КНОПКА ПРИСОЕДИНЕНИЯ - ДОБАВЛЯЕМ IsEnabled -->
                     <Button Content="Присоединиться"
                             Command="{Binding JoinRoomCommand}"
                             CommandParameter="{Binding Text, ElementName=RoomIdInput}"
                             Style="{StaticResource ModernButton}"
                             Height="35"
                             Margin="0,5,0,15"
-                            IsEnabled="{Binding IsConnected}"/>
+                            IsEnabled="{Binding CanJoinRoom}"/>
 
                     <!-- Информация о комнате -->
                     <Border CornerRadius="8"

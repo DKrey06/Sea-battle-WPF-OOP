@@ -36,6 +36,10 @@ namespace Sea_battle_WPF.ViewModels
         private bool _isManualPlacementMode = true;
         private bool _isManualPlacementValid;
 
+        // Добавляем новые свойства для блокировки кнопок
+        public bool CanCreateRoom => IsConnected && !IsGameStarted && !IsReady;
+        public bool CanJoinRoom => IsConnected && !IsGameStarted && !IsReady;
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string GameStatus
@@ -76,6 +80,8 @@ namespace Sea_battle_WPF.ViewModels
                 _isConnected = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(CanCreateOrJoin));
+                OnPropertyChanged(nameof(CanCreateRoom));
+                OnPropertyChanged(nameof(CanJoinRoom));
             }
         }
 
@@ -96,6 +102,8 @@ namespace Sea_battle_WPF.ViewModels
             {
                 _isReady = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(CanCreateRoom));
+                OnPropertyChanged(nameof(CanJoinRoom));
             }
         }
 
@@ -130,6 +138,8 @@ namespace Sea_battle_WPF.ViewModels
                 _isGameStarted = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(CanPlaceShips));
+                OnPropertyChanged(nameof(CanCreateRoom));
+                OnPropertyChanged(nameof(CanJoinRoom));
                 if (value)
                 {
                     IsOpponentReady = true;
@@ -361,6 +371,8 @@ namespace Sea_battle_WPF.ViewModels
                         GameStatus = "Игра началась! Ход соперника";
                         UpdateEnemyCellsClickability(false);
                     }
+                    OnPropertyChanged(nameof(CanCreateRoom));
+                    OnPropertyChanged(nameof(CanJoinRoom));
                 });
             };
 
@@ -602,6 +614,8 @@ namespace Sea_battle_WPF.ViewModels
             RoomId = "";
             GameStatus = "Отключено от сервера";
             OpponentStatus = "Ожидание соперника...";
+            OnPropertyChanged(nameof(CanCreateRoom));
+            OnPropertyChanged(nameof(CanJoinRoom));
         }
 
         private void InitializeCells()
