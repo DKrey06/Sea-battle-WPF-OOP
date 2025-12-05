@@ -32,9 +32,6 @@ namespace Sea_battle_WPF.ViewModels
         private string _opponentId;
         private bool _shipsSent;
         private bool _receivedPlayerJoined = false;
-        private bool _isManualPlacementValid;
-        private ShipViewModel _selectedShip;
-        private bool _canShowRestartButton = false;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -96,7 +93,6 @@ namespace Sea_battle_WPF.ViewModels
             {
                 _isReady = value;
                 OnPropertyChanged();
-                UpdateOpponentStatus();
             }
         }
 
@@ -107,6 +103,7 @@ namespace Sea_battle_WPF.ViewModels
             {
                 _isOpponentReady = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(CanStartGame));
                 UpdateOpponentStatus();
             }
         }
@@ -130,74 +127,30 @@ namespace Sea_battle_WPF.ViewModels
                 _isGameStarted = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(CanPlaceShips));
-
                 if (value)
                 {
-                    CanShowRestartButton = false;
+                    // При начале игры обновляем статусы
+                    IsOpponentReady = true;
+                    IsOpponentShipsPlaced = true;
                 }
-                else if (_opponentId != null)
-                {
-                    CanShowRestartButton = true;
-                }
-            }
-        }
-
-        public bool IsManualPlacementValid
-        {
-            get => _isManualPlacementValid;
-            set
-            {
-                _isManualPlacementValid = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public ShipViewModel SelectedShip
-        {
-            get => _selectedShip;
-            set
-            {
-                _selectedShip = value;
-                OnPropertyChanged();
-
-                foreach (var ship in AvailableShips)
-                {
-                    ship.IsSelected = ship == value;
-                }
-            }
-        }
-
-        public bool CanShowRestartButton
-        {
-            get => _canShowRestartButton;
-            set
-            {
-                _canShowRestartButton = value;
-                OnPropertyChanged();
             }
         }
 
         public bool CanPlaceShips => IsConnected && !IsGameStarted;
         public bool CanCreateOrJoin => IsConnected && !IsGameStarted;
+        public bool CanStartGame => IsReady && IsOpponentReady && IsOpponentShipsPlaced && !IsGameStarted;
 
         public ObservableCollection<ShipViewModel> AvailableShips { get; } = new ObservableCollection<ShipViewModel>();
         public ObservableCollection<CellViewModel> PlayerCells { get; } = new ObservableCollection<CellViewModel>();
         public ObservableCollection<CellViewModel> EnemyCells { get; } = new ObservableCollection<CellViewModel>();
 
-        public ICommand ConnectCommand { get; private set; }
-        public ICommand CreateRoomCommand { get; private set; }
-        public ICommand JoinRoomCommand { get; private set; }
-        public ICommand ReadyCommand { get; private set; }
-        public ICommand DisconnectCommand { get; private set; }
-        public ICommand CellClickCommand { get; private set; }
-        public ICommand AutoArrangeCommand { get; private set; }
-        public ICommand SurrenderCommand { get; private set; }
-        public ICommand StartNewGameCommand { get; private set; }
-        public ICommand SelectShipCommand { get; private set; }
-        public ICommand RotateShipCommand { get; private set; }
-        public ICommand PlayerCellClickCommand { get; private set; }
-        public ICommand RemoveShipCommand { get; private set; }
-        public ICommand ResetManualPlacementCommand { get; private set; }
+        public ICommand ConnectCommand { get; }
+        public ICommand CreateRoomCommand { get; }
+        public ICommand JoinRoomCommand { get; }
+        public ICommand ReadyCommand { get; }
+        public ICommand CellClickCommand { get; }
+        public ICommand AutoArrangeCommand { get; }
+        public ICommand DisconnectCommand { get; }
 
         public MultiplayerViewModel()
         {
@@ -210,28 +163,18 @@ namespace Sea_battle_WPF.ViewModels
 
             InitializeCells();
             InitializeAvailableShips(availableShipsList);
+
             SetupNetworkEvents();
-            InitializeCommands();
 
-            GameStatus = "Нажмите 'Подключиться' для игры по сети";
-        }
-
-        private void InitializeCommands()
-        {
             ConnectCommand = new RelayCommand(async () => await Connect());
             CreateRoomCommand = new RelayCommand(CreateRoom);
             JoinRoomCommand = new RelayCommand<string>(JoinRoom);
             ReadyCommand = new RelayCommand(SetReady);
-            DisconnectCommand = new RelayCommand(Disconnect);
             CellClickCommand = new RelayCommand<CellViewModel>(CellClickExecute);
             AutoArrangeCommand = new RelayCommand(AutoArrangeExecute);
-            SurrenderCommand = new RelayCommand(SurrenderExecute);
-            StartNewGameCommand = new RelayCommand(StartNewGameExecute);
-            SelectShipCommand = new RelayCommand<ShipViewModel>(SelectShipExecute);
-            RotateShipCommand = new RelayCommand(RotateShipExecute);
-            PlayerCellClickCommand = new RelayCommand<CellViewModel>(PlayerCellClickExecute);
-            RemoveShipCommand = new RelayCommand<ShipViewModel>(RemoveShipExecute);
-            ResetManualPlacementCommand = new RelayCommand(ResetManualPlacementExecute);
+            DisconnectCommand = new RelayCommand(Disconnect);
+
+            GameStatus = "Нажмите 'Подключиться' для игры по сети";
         }
 
         private void SetupNetworkEvents()
@@ -267,37 +210,62 @@ namespace Sea_battle_WPF.ViewModels
                 });
             };
 
+            // Обработка готовности противника
             _networkService.OnPlayerReady += (playerId) =>
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    if (_opponentId == null) _opponentId = playerId;
+                    // Если мы еще не знаем ID противника, но кто-то стал готовым,
+                    // значит это наш противник
+                    if (_opponentId == null)
+                    {
+                        _opponentId = playerId;
+                    }
 
-                    if (playerId != _networkService.PlayerId && playerId == _opponentId)
+                    // Проверяем, что это не наш собственный ID
+                    if (playerId != _networkService.PlayerId &&
+                        (_opponentId == null || playerId == _opponentId))
                     {
                         IsOpponentReady = true;
                         UpdateOpponentStatus();
+
+                        // Если мы создатель комнаты и подключился противник
+                        if (IsRoomCreator && !_receivedPlayerJoined && _opponentId == null)
+                        {
+                            _opponentId = playerId;
+                            _receivedPlayerJoined = true;
+                            OpponentStatus = "Соперник присоединился и готов";
+                        }
                     }
                 });
             };
 
+            // Обработка расстановки кораблей противником
             _networkService.OnShipsPlacedNotify += (playerId) =>
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    if (playerId != _networkService.PlayerId && playerId == _opponentId)
+                    // Проверяем, что это не наш собственный ID
+                    if (playerId != _networkService.PlayerId &&
+                        (_opponentId == null || playerId == _opponentId))
                     {
+                        if (_opponentId == null)
+                        {
+                            _opponentId = playerId;
+                        }
+
                         IsOpponentShipsPlaced = true;
                         UpdateOpponentStatus();
                     }
                 });
             };
 
+            // Обработка отключения игрока
             _networkService.OnPlayerDisconnected += (playerId) =>
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    if (playerId == _opponentId)
+                    if (_opponentId == null || playerId == _opponentId)
                     {
                         OpponentStatus = "Соперник отключился";
                         GameStatus = "Соперник покинул игру";
@@ -305,7 +273,6 @@ namespace Sea_battle_WPF.ViewModels
                         IsOpponentShipsPlaced = false;
                         IsGameStarted = false;
                         _shipsSent = false;
-                        CanShowRestartButton = true;
 
                         MessageBox.Show("Соперник отключился от игры.", "Игра прервана",
                             MessageBoxButton.OK, MessageBoxImage.Information);
@@ -320,7 +287,7 @@ namespace Sea_battle_WPF.ViewModels
                     IsGameStarted = true;
                     IsOpponentReady = true;
                     IsOpponentShipsPlaced = true;
-                    CanShowRestartButton = false;
+                    UpdateOpponentStatus();
 
                     if (_networkService.IsMyTurn)
                     {
@@ -385,10 +352,10 @@ namespace Sea_battle_WPF.ViewModels
                         var cellVM = PlayerCells.First(c => c.X == shot.X && c.Y == shot.Y);
                         cellVM.UpdateFromModel();
 
+                        // Проверка проигрыша
                         if (_game.PlayerField.AllShipsSunk)
                         {
                             GameStatus = "Вы проиграли!";
-                            CanShowRestartButton = true;
                             MessageBox.Show("Все ваши корабли потоплены!", "Поражение",
                                 MessageBoxButton.OK, MessageBoxImage.Information);
                             UpdateEnemyCellsClickability(false);
@@ -417,7 +384,6 @@ namespace Sea_battle_WPF.ViewModels
                     UpdateEnemyCellsClickability(false);
                     IsGameStarted = false;
                     _shipsSent = false;
-                    CanShowRestartButton = true;
                 });
             };
         }
@@ -431,14 +397,27 @@ namespace Sea_battle_WPF.ViewModels
                 {
                     GameStatus = "Оба игрока готовы! Игра скоро начнется...";
                 }
+                else if (IsReady)
+                {
+                    GameStatus = "Вы готовы. Ждем, пока соперник расставит корабли...";
+                }
             }
             else if (IsOpponentReady)
             {
                 OpponentStatus = "Соперник готов";
+                if (!IsReady)
+                {
+                    GameStatus = "Соперник готов. Расставьте корабли и нажмите 'Готов'";
+                }
+                else
+                {
+                    GameStatus = "Вы готовы. Ждем, пока соперник расставит корабли...";
+                }
             }
             else if (_opponentId != null)
             {
                 OpponentStatus = "Соперник присоединился";
+                GameStatus = "Соперник найден. Расставьте корабли и нажмите 'Готов'";
             }
             else
             {
@@ -448,46 +427,42 @@ namespace Sea_battle_WPF.ViewModels
 
         private async Task Connect()
         {
-            try
+            if (await _networkService.Connect())
             {
-                if (await _networkService.Connect())
-                {
-                    IsConnected = true;
-                    GameStatus = "Подключено. Создайте комнату или введите ID";
-                }
-                else
-                {
-                    MessageBox.Show("Не удалось подключиться к серверу", "Ошибка",
-                        MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка подключения: {ex.Message}", "Ошибка",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                IsConnected = true;
+                GameStatus = "Подключено. Создайте комнату или введите ID";
             }
         }
 
         private void CreateRoom()
         {
-            if (IsConnected) _networkService.CreateRoom();
+            if (IsConnected)
+            {
+                _networkService.CreateRoom();
+            }
         }
 
         private void JoinRoom(string roomId)
         {
             if (IsConnected && !string.IsNullOrEmpty(roomId))
+            {
                 _networkService.JoinRoom(roomId);
+            }
         }
 
         private void SetReady()
         {
-            if (IsConnected && RoomId != null && !IsReady && _game.PlayerField.Ships.Count == 10)
+            if (IsConnected && RoomId != null && !IsReady)
             {
+                // Сначала отправляем корабли
                 var ships = ConvertShipsToNetworkFormat();
                 _networkService.SendShips(ships);
                 _shipsSent = true;
+
+                // Затем сообщаем о готовности
                 _networkService.SetReady();
                 IsReady = true;
+
                 UpdateOpponentStatus();
             }
         }
@@ -529,183 +504,35 @@ namespace Sea_battle_WPF.ViewModels
 
         private void AutoArrangeExecute()
         {
-            if (!CanPlaceShips) return;
-
             _manualPlacementService.ResetPlacement();
             _game.PlayerField.ClearField();
             _game.AutoArrangePlayerShips();
             UpdatePlayerCells();
 
-            foreach (var ship in AvailableShips)
-                ship.IsPlaced = true;
-
-            IsManualPlacementValid = true;
-
             if (_shipsSent)
             {
+                // Если уже отправляли корабли, отправляем заново
                 var ships = ConvertShipsToNetworkFormat();
                 _networkService.SendShips(ships);
             }
 
-            GameStatus = "Корабли расставлены автоматически";
+            GameStatus = "Корабли расставлены";
         }
 
         private void Disconnect()
         {
-            try
-            {
-                _networkService.Disconnect();
-            }
-            catch { }
-            finally
-            {
-                ResetGameState();
-                GameStatus = "Отключено от сервера";
-                OpponentStatus = "Ожидание соперника...";
-            }
-        }
-
-        private void StartNewGameExecute()
-        {
-            var result = MessageBox.Show("Начать новую игру? Текущая игра будет сброшена.",
-                "Новая игра", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                ResetGameState();
-                GameStatus = "Нажмите 'Подключиться' для игры по сети";
-            }
-        }
-
-        private void ResetGameState()
-        {
-            try
-            {
-                _networkService.Disconnect();
-                IsConnected = false;
-                IsGameStarted = false;
-                IsReady = false;
-                IsOpponentReady = false;
-                IsOpponentShipsPlaced = false;
-                IsManualPlacementValid = false;
-                _opponentId = null;
-                _receivedPlayerJoined = false;
-                _shipsSent = false;
-                RoomId = "";
-                CanShowRestartButton = false;
-
-                _game.ResetGame();
-                _manualPlacementService.ResetPlacement();
-
-                foreach (var ship in AvailableShips)
-                {
-                    ship.IsSelected = false;
-                    ship.IsPlaced = false;
-                }
-
-                SelectedShip = null;
-                UpdatePlayerCells();
-                UpdateEnemyCells();
-                UpdateEnemyCellsClickability(false);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка сброса игры: {ex.Message}", "Ошибка",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void SurrenderExecute()
-        {
-            if (!IsGameStarted) return;
-
-            var result = MessageBox.Show("Вы уверены, что хотите сдаться?", "Сдаться",
-                MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                GameStatus = "Вы сдались";
-                CanShowRestartButton = true;
-                IsGameStarted = false;
-                UpdateEnemyCellsClickability(false);
-
-                MessageBox.Show("Вы сдались. Нажмите 'Начать заново' для новой игры.", "Игра окончена",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
-
-        private void SelectShipExecute(ShipViewModel ship)
-        {
-            if (ship == null) return;
-
-            if (SelectedShip == ship)
-            {
-                SelectedShip = null;
-                return;
-            }
-
-            SelectedShip = ship;
-        }
-
-        private void RotateShipExecute()
-        {
-            if (SelectedShip != null && !SelectedShip.IsPlaced)
-            {
-                SelectedShip.Rotate();
-                OnPropertyChanged(nameof(SelectedShip));
-            }
-        }
-
-        private void PlayerCellClickExecute(CellViewModel cellVM)
-        {
-            if (SelectedShip != null && !SelectedShip.IsPlaced && CanPlaceShips)
-            {
-                if (_manualPlacementService.TryPlaceShip(SelectedShip, cellVM.X, cellVM.Y))
-                {
-                    UpdatePlayerCells();
-                    SelectedShip.IsPlaced = true;
-                    IsManualPlacementValid = AvailableShips.All(s => s.IsPlaced);
-
-                    var nextShip = AvailableShips.FirstOrDefault(s => !s.IsPlaced);
-                    SelectedShip = nextShip;
-                }
-            }
-        }
-
-        private void RemoveShipExecute(ShipViewModel ship)
-        {
-            if (ship == null || !ship.IsPlaced) return;
-
-            _manualPlacementService.RemoveShip(ship);
-            UpdatePlayerCells();
-            ship.IsPlaced = false;
-            SelectedShip = null;
-            IsManualPlacementValid = AvailableShips.All(s => s.IsPlaced);
-        }
-
-        private void ResetManualPlacementExecute()
-        {
-            try
-            {
-                _manualPlacementService.ResetPlacement();
-                _game.PlayerField.ClearField();
-                UpdatePlayerCells();
-                SelectedShip = null;
-
-                foreach (var ship in AvailableShips)
-                {
-                    ship.IsSelected = false;
-                    ship.IsPlaced = false;
-                }
-
-                IsManualPlacementValid = false;
-                GameStatus = "Все корабли сброшены. Выберите корабль для размещения.";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка сброса расстановки: {ex.Message}", "Ошибка",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            _networkService.Disconnect();
+            IsConnected = false;
+            IsGameStarted = false;
+            IsReady = false;
+            IsOpponentReady = false;
+            IsOpponentShipsPlaced = false;
+            _opponentId = null;
+            _receivedPlayerJoined = false;
+            _shipsSent = false;
+            RoomId = "";
+            GameStatus = "Отключено от сервера";
+            OpponentStatus = "Ожидание соперника...";
         }
 
         private void InitializeCells()
@@ -742,18 +569,8 @@ namespace Sea_battle_WPF.ViewModels
             }
         }
 
-        private void UpdateEnemyCells()
-        {
-            foreach (var cellVM in EnemyCells)
-            {
-                cellVM.UpdateFromModel();
-            }
-        }
-
         private void UpdateEnemyCellsClickability(bool clickable)
         {
-            if (_game.EnemyField.AllShipsSunk) clickable = false;
-
             foreach (var cellVM in EnemyCells)
             {
                 cellVM.UpdateClickability(clickable);
