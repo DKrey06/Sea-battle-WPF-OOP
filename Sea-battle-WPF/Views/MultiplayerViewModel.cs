@@ -29,6 +29,7 @@ namespace Sea_battle_WPF.ViewModels
         private bool _isOpponentReady;
         private bool _isGameStarted;
         private string _opponentId;
+        private bool _shipsSent;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -112,6 +113,12 @@ namespace Sea_battle_WPF.ViewModels
                 _isGameStarted = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(CanPlaceShips));
+                if (value)
+                {
+                    // При начале игры обновляем статусы
+                    OpponentStatus = "Соперник готов";
+                    OnPropertyChanged(nameof(IsOpponentReady));
+                }
             }
         }
 
@@ -188,6 +195,7 @@ namespace Sea_battle_WPF.ViewModels
                 });
             };
 
+            // НОВОЕ: Обработка готовности противника
             _networkService.OnPlayerReady += (playerId) =>
             {
                 Application.Current.Dispatcher.Invoke(() =>
@@ -196,12 +204,20 @@ namespace Sea_battle_WPF.ViewModels
                     {
                         IsOpponentReady = true;
                         OpponentStatus = "Соперник готов!";
-                        GameStatus = "Оба игрока готовы! Игра начнется, когда все расставят корабли...";
+
+                        if (!IsReady)
+                        {
+                            GameStatus = "Соперник готов. Расставьте корабли и нажмите 'Готов'";
+                        }
+                        else
+                        {
+                            GameStatus = "Оба игрока готовы! Ожидаем расстановки кораблей...";
+                        }
                     }
                 });
             };
 
-
+            // НОВОЕ: Обработка отключения игрока
             _networkService.OnPlayerDisconnected += (playerId) =>
             {
                 Application.Current.Dispatcher.Invoke(() =>
@@ -212,6 +228,7 @@ namespace Sea_battle_WPF.ViewModels
                         GameStatus = "Соперник покинул игру";
                         IsOpponentReady = false;
                         IsGameStarted = false;
+                        _shipsSent = false;
 
                         MessageBox.Show("Соперник отключился от игры.", "Игра прервана",
                             MessageBoxButton.OK, MessageBoxImage.Information);
@@ -224,6 +241,9 @@ namespace Sea_battle_WPF.ViewModels
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     IsGameStarted = true;
+                    IsOpponentReady = true; // Обязательно устанавливаем true при начале игры
+                    OpponentStatus = "Соперник готов";
+
                     if (_networkService.IsMyTurn)
                     {
                         GameStatus = "Игра началась! Ваш ход";
@@ -260,7 +280,7 @@ namespace Sea_battle_WPF.ViewModels
                 {
                     if (shot.PlayerId == _networkService.PlayerId)
                     {
-
+                        // Наш выстрел
                         var cell = _game.EnemyField.Cells[shot.X, shot.Y];
                         cell.State = shot.IsHit ? CellState.Hit : CellState.Miss;
 
@@ -271,7 +291,7 @@ namespace Sea_battle_WPF.ViewModels
                     }
                     else
                     {
-
+                        // Выстрел противника
                         var cell = _game.PlayerField.Cells[shot.X, shot.Y];
                         if (shot.IsHit)
                         {
@@ -318,6 +338,7 @@ namespace Sea_battle_WPF.ViewModels
 
                     UpdateEnemyCellsClickability(false);
                     IsGameStarted = false;
+                    _shipsSent = false;
                 });
             };
         }
@@ -351,11 +372,16 @@ namespace Sea_battle_WPF.ViewModels
         {
             if (IsConnected && RoomId != null && !IsReady)
             {
+                // Сначала отправляем корабли
                 var ships = ConvertShipsToNetworkFormat();
                 _networkService.SendShips(ships);
+                _shipsSent = true;
+
+                // Затем сообщаем о готовности
                 _networkService.SetReady();
                 IsReady = true;
-                OpponentStatus = "Соперник готовится...";
+
+                OpponentStatus = "Ожидание соперника...";
                 GameStatus = "Вы готовы. Ждем соперника...";
             }
         }
@@ -401,6 +427,14 @@ namespace Sea_battle_WPF.ViewModels
             _game.PlayerField.ClearField();
             _game.AutoArrangePlayerShips();
             UpdatePlayerCells();
+
+            if (_shipsSent)
+            {
+                // Если уже отправляли корабли, отправляем заново
+                var ships = ConvertShipsToNetworkFormat();
+                _networkService.SendShips(ships);
+            }
+
             GameStatus = "Корабли расставлены";
         }
 
@@ -412,6 +446,7 @@ namespace Sea_battle_WPF.ViewModels
             IsReady = false;
             IsOpponentReady = false;
             _opponentId = null;
+            _shipsSent = false;
             RoomId = "";
             GameStatus = "Отключено от сервера";
             OpponentStatus = "Ожидание соперника...";

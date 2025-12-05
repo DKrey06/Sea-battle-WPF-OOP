@@ -28,9 +28,11 @@ namespace SeaBattle.Server
     public class GameState
     {
         public Dictionary<string, bool> PlayersReady { get; set; } = new Dictionary<string, bool>();
+        public Dictionary<string, bool> ShipsPlaced { get; set; } = new Dictionary<string, bool>();
         public Dictionary<string, List<ShipPlacement>> PlayerShips { get; set; } = new Dictionary<string, List<ShipPlacement>>();
         public Dictionary<string, List<Shot>> PlayerShots { get; set; } = new Dictionary<string, List<Shot>>();
-        public bool GameStarted => PlayersReady.Count == 2 && PlayersReady.All(p => p.Value);
+        public bool GameStarted => PlayersReady.Count == 2 && PlayersReady.All(p => p.Value) &&
+                                   ShipsPlaced.Count == 2 && ShipsPlaced.All(p => p.Value);
 
         public string CheckWinner()
         {
@@ -97,6 +99,7 @@ namespace SeaBattle.Server
             this.stream = client.GetStream();
             ClientId = Guid.NewGuid().ToString();
 
+            // Получаем IP клиента для логирования
             _clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
 
             Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игрок подключился с IP: {_clientIp}");
@@ -144,7 +147,7 @@ namespace SeaBattle.Server
                         server.JoinRoom(this, gameMessage.RoomId);
                         break;
                     case "READY":
-                        Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игрок {ClientId.Substring(0, 8)} готов в комнате {gameMessage.RoomId}");
+                        Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игрок {ClientId.Substring(0, 8)} нажал Готов в комнате {gameMessage.RoomId}");
                         server.SetPlayerReady(this, gameMessage.RoomId);
                         break;
                     case "SHIPS_PLACED":
@@ -245,7 +248,7 @@ namespace SeaBattle.Server
                 var host = Dns.GetHostEntry(Dns.GetHostName());
                 foreach (var ip in host.AddressList)
                 {
-                    // Берем только IPv4 адреса
+                    // Берем только IPv4 адреса, которые не являются loopback (127.0.0.1)
                     if (ip.AddressFamily == AddressFamily.InterNetwork &&
                         !IPAddress.IsLoopback(ip))
                     {
@@ -286,6 +289,7 @@ namespace SeaBattle.Server
                 room.Player2 = client;
                 client.RoomId = roomId;
 
+                // Уведомляем обоих игроков о подключении
                 var player1Message = new GameMessage
                 {
                     Type = "PLAYER_JOINED",
@@ -317,36 +321,20 @@ namespace SeaBattle.Server
             {
                 room.GameState.PlayersReady[client.ClientId] = true;
 
+                // Отправляем уведомление обоим игрокам о готовности
                 var readyMessage = new GameMessage
                 {
                     Type = "PLAYER_READY",
                     RoomId = roomId,
                     PlayerId = client.ClientId,
-                    Data = client.ClientId
+                    Data = client.ClientId // ID игрока, который готов
                 };
 
                 BroadcastToRoom(roomId, readyMessage);
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игрок {client.ClientId.Substring(0, 8)} готов в комнате {roomId}. Уведомление отправлено.");
 
-                if (room.GameState.GameStarted)
-                {
-                    room.CurrentPlayerTurn = room.Player1.ClientId;
-
-                    var startMessage = new GameMessage
-                    {
-                        Type = "GAME_STARTED",
-                        RoomId = roomId,
-                        Data = room.CurrentPlayerTurn
-                    };
-
-                    BroadcastToRoom(roomId, startMessage);
-
-                    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игра началась в комнате {roomId}! Первый ход у игрока {room.CurrentPlayerTurn.Substring(0, 8)}");
-                }
-                else
-                {
-                    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Ожидание второго игрока в комнате {roomId}");
-                }
+                // Проверяем, можно ли начать игру
+                CheckAndStartGame(roomId, room);
             }
         }
 
@@ -355,6 +343,38 @@ namespace SeaBattle.Server
             if (rooms.TryGetValue(roomId, out var room))
             {
                 room.GameState.PlayerShips[client.ClientId] = ships;
+                room.GameState.ShipsPlaced[client.ClientId] = true;
+
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игрок {client.ClientId.Substring(0, 8)} расставил корабли в комнате {roomId}");
+
+                // Проверяем, можно ли начать игру
+                CheckAndStartGame(roomId, room);
+            }
+        }
+
+        private void CheckAndStartGame(string roomId, GameRoom room)
+        {
+            if (room.GameState.GameStarted)
+            {
+                // Определяем, кто ходит первым
+                room.CurrentPlayerTurn = room.Player1.ClientId;
+
+                var startMessage = new GameMessage
+                {
+                    Type = "GAME_STARTED",
+                    RoomId = roomId,
+                    Data = room.CurrentPlayerTurn
+                };
+
+                BroadcastToRoom(roomId, startMessage);
+
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игра началась в комнате {roomId}! Первый ход у игрока {room.CurrentPlayerTurn.Substring(0, 8)}");
+            }
+            else
+            {
+                var readyCount = room.GameState.PlayersReady.Count(p => p.Value);
+                var shipsCount = room.GameState.ShipsPlaced.Count(p => p.Value);
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Статус комнаты {roomId}: {readyCount}/2 готовы, {shipsCount}/2 расставили корабли");
             }
         }
 
@@ -365,11 +385,13 @@ namespace SeaBattle.Server
                 shot.PlayerId = client.ClientId;
                 var opponent = client == room.Player1 ? room.Player2 : room.Player1;
 
+                // Проверяем попадание
                 if (room.GameState.PlayerShips.TryGetValue(opponent.ClientId, out var opponentShips))
                 {
                     shot.IsHit = opponentShips.Any(ship =>
                         ship.Cells.Any(cell => cell.X == shot.X && cell.Y == shot.Y));
 
+                    // Сохраняем выстрел
                     if (!room.GameState.PlayerShots.ContainsKey(client.ClientId))
                         room.GameState.PlayerShots[client.ClientId] = new List<Shot>();
 
@@ -377,6 +399,7 @@ namespace SeaBattle.Server
 
                     Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Выстрел в комнате {roomId}: {shot.X},{shot.Y} - {(shot.IsHit ? "ПОПАДАНИЕ!" : "промах")}");
 
+                    // Проверяем победителя
                     var winner = room.GameState.CheckWinner();
                     if (winner != null)
                     {
@@ -393,6 +416,7 @@ namespace SeaBattle.Server
                     }
                     else
                     {
+                        // Передаем ход
                         room.CurrentPlayerTurn = opponent.ClientId;
 
                         var shotResultMessage = new GameMessage
@@ -442,6 +466,7 @@ namespace SeaBattle.Server
 
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игрок вышел из комнаты {client.RoomId}");
 
+                // Уведомляем оставшегося игрока об отключении
                 var remainingPlayer = room.Player1 ?? room.Player2;
                 if (remainingPlayer != null)
                 {
@@ -454,6 +479,7 @@ namespace SeaBattle.Server
                     remainingPlayer.SendMessage(JsonConvert.SerializeObject(disconnectMessage));
                 }
 
+                // Удаляем комнату, если она пустая
                 if (room.Player1 == null && room.Player2 == null)
                 {
                     rooms.Remove(client.RoomId);
