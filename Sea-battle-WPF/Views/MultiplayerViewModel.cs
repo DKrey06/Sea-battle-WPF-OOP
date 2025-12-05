@@ -31,6 +31,7 @@ namespace Sea_battle_WPF.ViewModels
         private bool _isGameStarted;
         private string _opponentId;
         private bool _shipsSent;
+        private bool _receivedPlayerJoined = false;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -137,7 +138,7 @@ namespace Sea_battle_WPF.ViewModels
 
         public bool CanPlaceShips => IsConnected && !IsGameStarted;
         public bool CanCreateOrJoin => IsConnected && !IsGameStarted;
-        public bool CanStartGame => IsReady && IsOpponentReady && !IsGameStarted;
+        public bool CanStartGame => IsReady && IsOpponentReady && IsOpponentShipsPlaced && !IsGameStarted;
 
         public ObservableCollection<ShipViewModel> AvailableShips { get; } = new ObservableCollection<ShipViewModel>();
         public ObservableCollection<CellViewModel> PlayerCells { get; } = new ObservableCollection<CellViewModel>();
@@ -203,6 +204,7 @@ namespace Sea_battle_WPF.ViewModels
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     _opponentId = playerId;
+                    _receivedPlayerJoined = true;
                     OpponentStatus = "Соперник присоединился";
                     GameStatus = "Соперник найден. Расставьте корабли и нажмите 'Готов'";
                 });
@@ -213,10 +215,27 @@ namespace Sea_battle_WPF.ViewModels
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    if (playerId == _opponentId)
+                    // Если мы еще не знаем ID противника, но кто-то стал готовым,
+                    // значит это наш противник
+                    if (_opponentId == null)
+                    {
+                        _opponentId = playerId;
+                    }
+
+                    // Проверяем, что это не наш собственный ID
+                    if (playerId != _networkService.PlayerId &&
+                        (_opponentId == null || playerId == _opponentId))
                     {
                         IsOpponentReady = true;
                         UpdateOpponentStatus();
+
+                        // Если мы создатель комнаты и подключился противник
+                        if (IsRoomCreator && !_receivedPlayerJoined && _opponentId == null)
+                        {
+                            _opponentId = playerId;
+                            _receivedPlayerJoined = true;
+                            OpponentStatus = "Соперник присоединился и готов";
+                        }
                     }
                 });
             };
@@ -226,8 +245,15 @@ namespace Sea_battle_WPF.ViewModels
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    if (playerId == _opponentId)
+                    // Проверяем, что это не наш собственный ID
+                    if (playerId != _networkService.PlayerId &&
+                        (_opponentId == null || playerId == _opponentId))
                     {
+                        if (_opponentId == null)
+                        {
+                            _opponentId = playerId;
+                        }
+
                         IsOpponentShipsPlaced = true;
                         UpdateOpponentStatus();
                     }
@@ -239,7 +265,7 @@ namespace Sea_battle_WPF.ViewModels
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    if (playerId == _opponentId)
+                    if (_opponentId == null || playerId == _opponentId)
                     {
                         OpponentStatus = "Соперник отключился";
                         GameStatus = "Соперник покинул игру";
@@ -371,6 +397,10 @@ namespace Sea_battle_WPF.ViewModels
                 {
                     GameStatus = "Оба игрока готовы! Игра скоро начнется...";
                 }
+                else if (IsReady)
+                {
+                    GameStatus = "Вы готовы. Ждем, пока соперник расставит корабли...";
+                }
             }
             else if (IsOpponentReady)
             {
@@ -498,6 +528,7 @@ namespace Sea_battle_WPF.ViewModels
             IsOpponentReady = false;
             IsOpponentShipsPlaced = false;
             _opponentId = null;
+            _receivedPlayerJoined = false;
             _shipsSent = false;
             RoomId = "";
             GameStatus = "Отключено от сервера";
