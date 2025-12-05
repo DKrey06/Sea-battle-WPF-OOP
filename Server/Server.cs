@@ -476,9 +476,7 @@ namespace SeaBattle.Server
                     }
                     else
                     {
-                        // Передаем ход
-                        room.CurrentPlayerTurn = opponent.ClientId;
-
+                        // Сначала отправляем результат выстрела
                         var shotResultMessage = new GameMessage
                         {
                             Type = "SHOT_RESULT",
@@ -488,16 +486,27 @@ namespace SeaBattle.Server
 
                         BroadcastToRoom(roomId, shotResultMessage);
 
-                        var turnMessage = new GameMessage
+                        // ТОЛЬКО ПРИ ПРОМАХЕ передаем ход другому игроку
+                        if (!shot.IsHit)
                         {
-                            Type = "TURN_CHANGED",
-                            RoomId = roomId,
-                            Data = room.CurrentPlayerTurn
-                        };
+                            room.CurrentPlayerTurn = opponent.ClientId;
 
-                        BroadcastToRoom(roomId, turnMessage);
+                            var turnMessage = new GameMessage
+                            {
+                                Type = "TURN_CHANGED",
+                                RoomId = roomId,
+                                Data = room.CurrentPlayerTurn
+                            };
 
-                        Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Ход передан игроку {room.CurrentPlayerTurn.Substring(0, 8)} в комнате {roomId}");
+                            BroadcastToRoom(roomId, turnMessage);
+
+                            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Ход передан игроку {room.CurrentPlayerTurn.Substring(0, 8)} в комнате {roomId}");
+                        }
+                        else
+                        {
+                            // При попадании ход остается у текущего игрока
+                            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игрок {client.ClientId.Substring(0, 8)} продолжает ход в комнате {roomId}");
+                        }
                     }
                 }
             }

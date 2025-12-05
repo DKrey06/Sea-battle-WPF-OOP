@@ -332,7 +332,13 @@ namespace Sea_battle_WPF.ViewModels
                         var cellVM = EnemyCells.First(c => c.X == shot.X && c.Y == shot.Y);
                         cellVM.UpdateFromModel();
 
-                        GameStatus = shot.IsHit ? "Вы попали!" : "Вы промахнулись";
+                        GameStatus = shot.IsHit ? "Вы попали! Делайте следующий выстрел" : "Вы промахнулись";
+
+                        // ПРИ ПОПАДАНИИ - оставляем клетки активными для следующего выстрела
+                        if (shot.IsHit)
+                        {
+                            UpdateEnemyCellsClickability(true);
+                        }
                     }
                     else
                     {
