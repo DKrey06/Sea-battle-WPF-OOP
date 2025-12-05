@@ -414,8 +414,44 @@ namespace SeaBattle.Server
 
         private void CheckAndStartGame(string roomId, GameRoom room)
         {
+            var readyCount = room.GameState.PlayersReady.Count(p => p.Value);
+            var shipsCount = room.GameState.ShipsPlaced.Count(p => p.Value);
+
+            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Статус комнаты {roomId}: {readyCount}/2 готовы, {shipsCount}/2 расставили корабли");
+
             if (room.GameState.GameStarted)
             {
+                // ОБЯЗАТЕЛЬНО отправляем статус готовности обоим игрокам перед началом игры
+                foreach (var playerId in room.GameState.PlayersReady.Keys)
+                {
+                    if (room.GameState.PlayersReady[playerId])
+                    {
+                        var playerReadyMessage = new GameMessage
+                        {
+                            Type = "PLAYER_READY",
+                            RoomId = roomId,
+                            PlayerId = playerId,
+                            Data = playerId
+                        };
+                        BroadcastToRoom(roomId, playerReadyMessage);
+                    }
+                }
+
+                foreach (var playerId in room.GameState.ShipsPlaced.Keys)
+                {
+                    if (room.GameState.ShipsPlaced[playerId])
+                    {
+                        var shipsPlacedMessage = new GameMessage
+                        {
+                            Type = "SHIPS_PLACED_NOTIFY",
+                            RoomId = roomId,
+                            PlayerId = playerId,
+                            Data = playerId
+                        };
+                        BroadcastToRoom(roomId, shipsPlacedMessage);
+                    }
+                }
+
                 // Определяем, кто ходит первым
                 room.CurrentPlayerTurn = room.Player1.ClientId;
 
@@ -429,12 +465,6 @@ namespace SeaBattle.Server
                 BroadcastToRoom(roomId, startMessage);
 
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игра началась в комнате {roomId}! Первый ход у игрока {room.CurrentPlayerTurn.Substring(0, 8)}");
-            }
-            else
-            {
-                var readyCount = room.GameState.PlayersReady.Count(p => p.Value);
-                var shipsCount = room.GameState.ShipsPlaced.Count(p => p.Value);
-                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Статус комнаты {roomId}: {readyCount}/2 готовы, {shipsCount}/2 расставили корабли");
             }
         }
 
