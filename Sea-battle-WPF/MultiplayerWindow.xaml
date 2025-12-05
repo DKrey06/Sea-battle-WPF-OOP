@@ -6,263 +6,455 @@
         xmlns:local="clr-namespace:Sea_battle_WPF"
         xmlns:viewmodels="clr-namespace:Sea_battle_WPF.ViewModels"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:converters="clr-namespace:Sea_battle_WPF"
         mc:Ignorable="d"
-        Title="Морской бой - Сеть" 
-        Height="700" 
-        Width="1100"
+        Title="Морской бой - Сетевая игра" 
+        Height="900" 
+        Width="1400"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource PrimaryBrush}">
 
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <converters:BoolToReadyConverter x:Key="BoolToReadyConverter"/>
+            <converters:ReadyColorConverter x:Key="ReadyColorConverter"/>
+            <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        </ResourceDictionary>
+    </Window.Resources>
+
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-        <!-- Левая панель - управление -->
-        <Border Grid.Column="0"
-                Background="{StaticResource SecondaryBrush}"
-                BorderBrush="{StaticResource DarkBrush}"
-                BorderThickness="2"
-                CornerRadius="10"
-                Margin="10">
+        <!-- Верхняя панелька с лого -->
+        <DockPanel Grid.Row="0" 
+                   Background="{StaticResource SecondaryBrush}"
+                   Height="60"
+                   LastChildFill="False">
 
-            <StackPanel Margin="15">
-                <TextBlock Text="Сетевая игра"
-                           Foreground="{StaticResource TextBrush}"
-                           FontSize="20"
-                           FontWeight="Bold"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,20"/>
-
-                <!-- Статус -->
-                <Border CornerRadius="8"
-                        Padding="10"
-                        BorderThickness="1"
-                        BorderBrush="{StaticResource DarkBrush}"
-                        Margin="0,0,0,15">
-                    <StackPanel>
-                        <TextBlock Text="Статус:"
-                                   Foreground="{StaticResource TextBrush}"
-                                   FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding GameStatus}"
-                                   Foreground="{StaticResource TextBrush}"
-                                   Margin="0,5,0,0"
-                                   TextWrapping="Wrap"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- Управление подключением -->
-                <Button Content="Подключиться"
-                        Command="{Binding ConnectCommand}"
-                        Style="{StaticResource ModernButton}"
-                        Height="35"
-                        Margin="0,0,0,10"/>
-
-                <Button Content="Создать комнату"
-                        Command="{Binding CreateRoomCommand}"
-                        Style="{StaticResource ModernButton}"
-                        Height="35"
-                        Margin="0,0,0,10"/>
-
-                <!-- Ввод ID комнаты -->
-                <TextBlock Text="ID комнаты для присоединения:"
-                           Foreground="{StaticResource TextBrush}"
-                           Margin="0,10,0,5"/>
-
-                <TextBox x:Name="RoomIdInput"
-                 Style="{StaticResource ModernTextBox}"
-                 Margin="0,0,0,5"/>
-
-                <Button Content="Присоединиться"
-                        Command="{Binding JoinRoomCommand}"
-                        CommandParameter="{Binding Text, ElementName=RoomIdInput}"
-                        Style="{StaticResource ModernButton}"
-                        Height="35"
-                        Margin="0,5,0,15"/>
-
-                <!-- Информация о комнате -->
-                <Border CornerRadius="8"
-                        Padding="10"
-                        BorderThickness="1"
-                        BorderBrush="{StaticResource DarkBrush}"
-                        Margin="0,0,0,15">
-                    <StackPanel>
-                        <TextBlock Text="ID комнаты:"
-                                   Foreground="{StaticResource TextBrush}"
-                                   FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding RoomId}"
-                                   Foreground="{StaticResource TextBrush}"
-                                   FontSize="16"
-                                   FontWeight="Bold"
-                                   Margin="0,5,0,10"/>
-
-                        <TextBlock Text="{Binding OpponentStatus}"
-                                   Foreground="{StaticResource TextBrush}"
-                                   TextWrapping="Wrap"/>
-
-                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                            <TextBlock Text="Вы: "
-                                       Foreground="{StaticResource TextBrush}"/>
-                            <TextBlock Text="{Binding IsReady, Converter={StaticResource BoolToReadyConverter}}"
-                                       Foreground="{Binding IsReady, Converter={StaticResource ReadyColorConverter}}"/>
-                        </StackPanel>
-
-                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                            <TextBlock Text="Соперник: "
-                                       Foreground="{StaticResource TextBrush}"/>
-                            <TextBlock Text="{Binding IsOpponentReady, Converter={StaticResource BoolToReadyConverter}}"
-                                       Foreground="{Binding IsOpponentReady, Converter={StaticResource ReadyColorConverter}}"/>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- Кнопка готовности -->
-                <Button Content="Готов"
-                        Command="{Binding ReadyCommand}"
-                        Height="40"
-                        Margin="0,0,0,10">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsReady}" Value="True">
-                                    <Setter Property="Background" Value="#4CAF50"/>
-                                    <Setter Property="Foreground" Value="White"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-
-                <!-- Авторасстановка -->
-                <Button Content="Авторасстановка"
-                        Command="{Binding AutoArrangeCommand}"
-                        Style="{StaticResource ModernButton}"
-                        Height="35"
-                        Margin="0,0,0,15"/>
-
-                <!-- Отключиться -->
-                <Button Content="Отключиться"
-                        Command="{Binding DisconnectCommand}"
-                        Style="{StaticResource ModernButton}"
-                        Height="35"
-                        Background="#FF6B6B"/>
+            <!-- Лого и текст -->
+            <StackPanel Orientation="Horizontal" 
+                        VerticalAlignment="Center"
+                        DockPanel.Dock="Left">
+                <Image Source="/Images/FunCat4.png" 
+                       Width="50" 
+                       Height="50" 
+                       Margin="10,0,5,0"/>
+                <TextBlock Foreground="{StaticResource TextBrush}"
+                           FontFamily="Comic Sans MS"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           FontStyle="Italic"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap"
+                           MaxWidth="250"
+                           TextAlignment="Center" 
+                           Width="223">
+                    <TextBlock.Effect>
+                        <DropShadowEffect ShadowDepth="1" 
+                                          Color="{StaticResource AccentPurple}" 
+                                          BlurRadius="2" 
+                                          Opacity="0.6"/>
+                    </TextBlock.Effect>
+                    <Run Text="Да победит "/>
+                    <Run Language="ru-ru" Text=" "/>
+                    <Run Text="же сильнейший                             в Мяурском сражении!"/>
+                </TextBlock>
             </StackPanel>
-        </Border>
 
-        <!-- Игровые поля -->
-        <Grid Grid.Column="1" Margin="10">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <!-- Заголовок статуса -->
-            <Border Grid.Row="0"
-                    Background="{StaticResource AccentBrush}"
-                    CornerRadius="8"
-                    Padding="15"
-                    BorderBrush="{StaticResource DarkBrush}"
-                    BorderThickness="1"
-                    Margin="0,0,0,15">
-                <TextBlock Text="{Binding GameStatus}"
-                           Foreground="{StaticResource TextBrush}"
-                           FontSize="20"
+            <!-- Статус подключения -->
+            <Border Background="{Binding IsConnected, Converter={StaticResource ReadyColorConverter}}"
+                    CornerRadius="15"
+                    Padding="8,3"
+                    Margin="0,0,15,0"
+                    VerticalAlignment="Center"
+                    DockPanel.Dock="Right">
+                <TextBlock Foreground="White"
                            FontWeight="Bold"
-                           HorizontalAlignment="Center"/>
+                           FontSize="12"
+                           Text="{Binding IsConnected, Converter={StaticResource BoolToReadyConverter}}"/>
+            </Border>
+        </DockPanel>
+
+        <!-- Основное содержимое -->
+        <Grid Grid.Row="1" Margin="20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ЛЕВАЯ ПАНЕЛЬ УПРАВЛЕНИЯ С ПРОКРУТКОЙ -->
+            <Border Grid.Column="0"
+                    Background="{StaticResource SecondaryBrush}"
+                    CornerRadius="10"
+                    BorderBrush="{StaticResource DarkBrush}"
+                    BorderThickness="2" Margin="0,0,0,164">
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="15">
+                        <TextBlock Text="Сетевая игра" 
+                                   Foreground="{StaticResource TextBrush}"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,15"/>
+
+                        <!-- Статус игры -->
+                        <Border CornerRadius="8"
+                                Padding="12"
+                                BorderThickness="1"
+                                BorderBrush="{StaticResource DarkBrush}"
+                                Background="{StaticResource AccentBrush}"
+                                Margin="0,0,0,15">
+                            <StackPanel>
+                                <TextBlock Text="{Binding GameStatus}"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontWeight="SemiBold"
+                                           TextWrapping="Wrap"
+                                           TextAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Кнопки подключения -->
+                        <Button Content="Подключиться"
+                                Command="{Binding ConnectCommand}"
+                                Style="{StaticResource ModernButton}"
+                                Height="35"
+                                Margin="0,0,0,10"/>
+
+                        <Button Content="Создать комнату"
+                                Command="{Binding CreateRoomCommand}"
+                                Style="{StaticResource ModernButton}"
+                                Height="35"
+                                Margin="0,0,0,10"/>
+
+                        <!-- Ввод ID комнаты -->
+                        <TextBlock Text="Введите ID комнаты:"
+                                   Foreground="{StaticResource TextBrush}"
+                                   FontWeight="SemiBold"
+                                   Margin="0,10,0,5"/>
+
+                        <TextBox x:Name="RoomIdInput"
+                                 Style="{StaticResource ModernTextBox}"
+                                 Margin="0,0,0,5"
+                                 FontSize="16"
+                                 FontWeight="Bold"
+                                 TextAlignment="Center"/>
+
+                        <Button Content="Присоединиться"
+                                Command="{Binding JoinRoomCommand}"
+                                CommandParameter="{Binding Text, ElementName=RoomIdInput}"
+                                Style="{StaticResource ModernButton}"
+                                Height="35"
+                                Margin="0,5,0,15"/>
+
+                        <!-- Информация о комнате -->
+                        <Border CornerRadius="8"
+                                Padding="12"
+                                BorderThickness="1"
+                                BorderBrush="{StaticResource DarkBrush}"
+                                Margin="0,0,0,15">
+                            <StackPanel>
+                                <TextBlock Text="ID комнаты:"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontWeight="SemiBold"/>
+
+                                <Border Background="{StaticResource PrimaryBrush}"
+                                        CornerRadius="5"
+                                        Padding="8"
+                                        Margin="0,5,0,10">
+                                    <TextBlock Text="{Binding RoomId}"
+                                               Foreground="{StaticResource TextBrush}"
+                                               FontSize="18"
+                                               FontWeight="Bold"
+                                               HorizontalAlignment="Center"/>
+                                </Border>
+
+                                <TextBlock Text="{Binding OpponentStatus}"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontWeight="SemiBold"
+                                           TextWrapping="Wrap"
+                                           TextAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Статусы игроков -->
+                        <StackPanel Margin="0,0,0,15">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <Ellipse Width="12" Height="12" 
+                                         Fill="{Binding IsReady, Converter={StaticResource ReadyColorConverter}}"
+                                         Margin="0,0,8,0"
+                                         VerticalAlignment="Center"/>
+                                <TextBlock Text="Вы: " 
+                                           Foreground="{StaticResource TextBrush}"/>
+                                <TextBlock Text="{Binding IsReady, Converter={StaticResource BoolToReadyConverter}}"
+                                           Foreground="{Binding IsReady, Converter={StaticResource ReadyColorConverter}}"
+                                           FontWeight="Bold"
+                                           Margin="5,0,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="12" Height="12" 
+                                         Fill="{Binding IsOpponentReady, Converter={StaticResource ReadyColorConverter}}"
+                                         Margin="0,0,8,0"
+                                         VerticalAlignment="Center"/>
+                                <TextBlock Text="Соперник: " 
+                                           Foreground="{StaticResource TextBrush}"/>
+                                <TextBlock Text="{Binding IsOpponentReady, Converter={StaticResource BoolToReadyConverter}}"
+                                           Foreground="{Binding IsOpponentReady, Converter={StaticResource ReadyColorConverter}}"
+                                           FontWeight="Bold"
+                                           Margin="5,0,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Кнопка готовности -->
+                        <Button Content="Готов"
+                                Command="{Binding ReadyCommand}"
+                                Height="40"
+                                Margin="0,0,0,10">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
+                                    <Setter Property="IsEnabled" Value="{Binding IsManualPlacementValid}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsReady}" Value="True">
+                                            <Setter Property="Background" Value="#4CAF50"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="Content" Value="✓ Готов"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsManualPlacementValid}" Value="False">
+                                            <Setter Property="Background" Value="#CCCCCC"/>
+                                            <Setter Property="Foreground" Value="#666666"/>
+                                            <Setter Property="ToolTip" Value="Расставьте все корабли правильно"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <!-- Кнопки управления игрой -->
+                        <StackPanel Margin="0,10,0,10">
+                            <!-- Авторасстановка -->
+                            <Button Content="Авторасстановка"
+                                    Command="{Binding AutoArrangeCommand}"
+                                    Height="35"
+                                    Margin="0,0,0,8">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
+                                        <Setter Property="IsEnabled" Value="{Binding CanPlaceShips}"/>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <!-- Сдаться -->
+                            <Button Content="Сдаться"
+                                    Command="{Binding SurrenderCommand}"
+                                    Height="35"
+                                    Margin="0,0,0,8"
+                                    Background="#FF6B6B"
+                                    Foreground="White">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsGameStarted}" Value="True">
+                                                <Setter Property="IsEnabled" Value="True"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <!-- Начать заново -->
+                            <Button Content="Начать заново"
+                                    Command="{Binding StartNewGameCommand}"
+                                    Height="35"
+                                    Margin="0,0,0,8">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CanShowRestartButton}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+
+                        <!-- Кнопка отключения -->
+                        <Button Content="Отключиться"
+                                Command="{Binding DisconnectCommand}"
+                                Style="{StaticResource ModernButton}"
+                                Height="35"
+                                Background="#6B6BFF"
+                                Foreground="White"
+                                Margin="0,0,0,15"/>
+                    </StackPanel>
+                </ScrollViewer>
             </Border>
 
-            <!-- Поля -->
-            <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="20"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+            <!-- Отступ -->
+            <Rectangle Grid.Column="1" 
+                       Fill="Transparent"
+                       Width="10"/>
 
-                <!-- Мое поле -->
-                <Border Grid.Column="0"
-                        Background="{StaticResource WaterBrush}"
-                        CornerRadius="10"
-                        Padding="15"
-                        BorderBrush="{StaticResource DarkBrush}"
-                        BorderThickness="2">
-                    <StackPanel>
-                        <TextBlock Text="Мое поле"
-                                   Foreground="{StaticResource TextBrush}"
-                                   FontSize="16"
-                                   FontWeight="Bold"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,0,0,10"/>
+            <!-- Левое поле (мое) -->
+            <Border Grid.Column="2" 
+                    Background="{StaticResource WaterBrush}"
+                    CornerRadius="10"
+                    Padding="15"
+                    BorderBrush="{StaticResource DarkBrush}"
+                    BorderThickness="2">
 
-                        <Viewbox Stretch="Uniform" 
-                                 MaxWidth="350" 
-                                 MaxHeight="350" 
-                                 HorizontalAlignment="Center">
-                            <ItemsControl ItemsSource="{Binding PlayerCells}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <UniformGrid Rows="10" Columns="10"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Width="30" Height="30" 
-                                                BorderBrush="Black" 
-                                                BorderThickness="1">
-                                            <Border.Background>
-                                                <Binding Path="CellColor"/>
-                                            </Border.Background>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Viewbox>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Аватар и имя игрока -->
+                    <StackPanel Grid.Row="0"
+                                Orientation="Horizontal" 
+                                HorizontalAlignment="Center"
+                                Margin="0,0,0,15">
+                        <Image Source="/Images/Piratcat1.png" 
+                               Width="40" 
+                               Height="40"
+                               Margin="0,0,10,0"/>
+                        <TextBlock Text="Вы" 
+                                   Style="{StaticResource HeaderText}"
+                                   VerticalAlignment="Center"/>
                     </StackPanel>
-                </Border>
 
-                <!-- Разделитель -->
-                <Rectangle Grid.Column="1" 
-                           Fill="{StaticResource AccentBrush}"
-                           Width="3" 
-                           RadiusX="2" 
-                           RadiusY="2"/>
+                    <!-- Подпись поля -->
+                    <TextBlock Grid.Row="1"
+                               Text="Мое поле" 
+                               Foreground="{StaticResource TextBrush}"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,10"/>
 
-                <!-- Поле противника -->
-                <Border Grid.Column="2"
-                        Background="{StaticResource WaterBrush}"
-                        CornerRadius="10"
-                        Padding="15"
-                        BorderBrush="{StaticResource DarkBrush}"
-                        BorderThickness="2">
-                    <StackPanel>
-                        <TextBlock Text="Поле противника"
-                                   Foreground="{StaticResource TextBrush}"
-                                   FontSize="16"
-                                   FontWeight="Bold"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,0,0,10"/>
+                    <!-- Игровое поле -->
+                    <Viewbox Grid.Row="2"
+                             Stretch="Uniform" 
+                             MaxWidth="350" 
+                             MaxHeight="350"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center">
+                        <ItemsControl ItemsSource="{Binding PlayerCells}"
+                                      HorizontalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Rows="10" Columns="10"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource CellStyle}">
+                                        <Border Background="{Binding CellColor}">
+                                            <i:Interaction.Triggers>
+                                                <i:EventTrigger EventName="MouseLeftButtonDown">
+                                                    <i:InvokeCommandAction 
+                                                        Command="{Binding DataContext.PlayerCellClickCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                        CommandParameter="{Binding}"/>
+                                                </i:EventTrigger>
+                                                <i:EventTrigger EventName="MouseEnter">
+                                                    <i:InvokeCommandAction 
+                                                        Command="{Binding DataContext.PlayerCellMouseEnterCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                        CommandParameter="{Binding}"/>
+                                                </i:EventTrigger>
+                                                <i:EventTrigger EventName="MouseLeave">
+                                                    <i:InvokeCommandAction 
+                                                        Command="{Binding DataContext.PlayerCellMouseLeaveCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                        CommandParameter="{Binding}"/>
+                                                </i:EventTrigger>
+                                            </i:Interaction.Triggers>
+                                        </Border>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Viewbox>
+                </Grid>
+            </Border>
 
-                        <Viewbox Stretch="Uniform" 
-                                 MaxWidth="350" 
-                                 MaxHeight="350" 
-                                 HorizontalAlignment="Center">
-                            <ItemsControl ItemsSource="{Binding EnemyCells}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <UniformGrid Rows="10" Columns="10"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Width="30" Height="30" 
-                                                BorderBrush="Black" 
-                                                BorderThickness="1"
-                                                Cursor="Hand">
-                                            <Border.Background>
-                                                <Binding Path="CellColor"/>
-                                            </Border.Background>
+            <!-- Разделитель между полями -->
+            <Rectangle Grid.Column="3" 
+                       Fill="{StaticResource AccentBrush}"
+                       Width="3" 
+                       RadiusX="2" 
+                       RadiusY="2"
+                       VerticalAlignment="Stretch"
+                       Margin="0,50"/>
 
+            <!-- Правое поле противника -->
+            <Border Grid.Column="4" 
+                    Background="{StaticResource WaterBrush}"
+                    CornerRadius="10"
+                    Padding="15"
+                    BorderBrush="{StaticResource DarkBrush}"
+                    BorderThickness="2">
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Аватар и имя противника -->
+                    <StackPanel Grid.Row="0"
+                                Orientation="Horizontal" 
+                                HorizontalAlignment="Center"
+                                Margin="0,0,0,15">
+                        <TextBlock Text="Соперник" 
+                                   Style="{StaticResource HeaderText}"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,10,0"/>
+                        <Image Source="/Images/Piratcat2.png" 
+                               Width="40" 
+                               Height="40"/>
+                    </StackPanel>
+
+                    <!-- Подпись поля -->
+                    <TextBlock Grid.Row="1"
+                               Text="Поле противника" 
+                               Foreground="{StaticResource TextBrush}"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,10"/>
+
+                    <!-- Игровое поле противника -->
+                    <Viewbox Grid.Row="2"
+                             Stretch="Uniform" 
+                             MaxWidth="350" 
+                             MaxHeight="350"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center">
+                        <ItemsControl ItemsSource="{Binding EnemyCells}"
+                                      HorizontalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Rows="10" Columns="10"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource CellStyle}">
+                                        <Border Background="{Binding CellColor}">
                                             <i:Interaction.Triggers>
                                                 <i:EventTrigger EventName="MouseLeftButtonDown">
                                                     <i:InvokeCommandAction 
@@ -271,13 +463,372 @@
                                                 </i:EventTrigger>
                                             </i:Interaction.Triggers>
                                         </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Viewbox>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Viewbox>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ПАНЕЛЬ РУЧНОЙ РАССТАНОВКИ КОРАБЛЕЙ (горизонтальная) -->
+        <Border Grid.Row="2"
+                Background="{StaticResource SecondaryBrush}"
+                Height="180"
+                CornerRadius="10,10,0,0"
+                BorderBrush="{StaticResource DarkBrush}"
+                BorderThickness="2,2,2,0"
+                Margin="0,-180,0,0"
+                VerticalAlignment="Bottom">
+
+            <!-- Видимость через триггеры -->
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <!-- Скрываем, если игра началась -->
+                        <DataTrigger Binding="{Binding IsGameStarted}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                        <!-- Скрываем, если не подключены -->
+                        <DataTrigger Binding="{Binding IsConnected}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Левая часть: статус и кнопки управления -->
+                <Border Grid.Column="0"
+                        Background="{StaticResource PrimaryBrush}"
+                        Width="200"
+                        BorderBrush="{StaticResource DarkBrush}"
+                        BorderThickness="0,0,1,0">
+                    <StackPanel Margin="10">
+                        <TextBlock Text="Ручная расстановка" 
+                                   Foreground="{StaticResource TextBrush}"
+                                   FontSize="16"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,10"/>
+
+                        <!-- Кнопки управления -->
+                        <Button Content="↻ Повернуть корабль" 
+                                Command="{Binding RotateShipCommand}"
+                                Style="{StaticResource ModernButton}"
+                                Margin="0,0,0,8"
+                                Height="32"
+                                FontSize="12"
+                                ToolTip="Повернуть выбранный корабль"/>
+
+                        <Button Content="⟲ Сбросить все корабли" 
+                                Command="{Binding ResetManualPlacementCommand}"
+                                Style="{StaticResource ModernButton}"
+                                Margin="0,0,0,10"
+                                Height="32"
+                                FontSize="12"
+                                ToolTip="Удалить все корабли и расставить автоматически"/>
+
+                        <!-- Статус расстановки -->
+                        <Border CornerRadius="6"
+                                Padding="8,6"
+                                BorderThickness="1"
+                                BorderBrush="{StaticResource DarkBrush}"
+                                Margin="0,5,0,0">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#FFE0E0"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsManualPlacementValid}" Value="True">
+                                            <Setter Property="Background" Value="#E8FFE8"/>
+                                            <Setter Property="BorderBrush" Value="#4CAF50"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsManualPlacementValid}" Value="False">
+                                            <Setter Property="Background" Value="#FFE8E8"/>
+                                            <Setter Property="BorderBrush" Value="#FF6B6B"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <!-- Иконка статуса -->
+                                <TextBlock FontSize="16" 
+                                           FontWeight="Bold"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,6,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="⏳"/>
+                                            <Setter Property="Foreground" Value="#666666"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsManualPlacementValid}" Value="True">
+                                                    <Setter Property="Text" Value="✓"/>
+                                                    <Setter Property="Foreground" Value="#4CAF50"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsManualPlacementValid}" Value="False">
+                                                    <Setter Property="Text" Value="✗"/>
+                                                    <Setter Property="Foreground" Value="#FF6B6B"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
+                                <!-- Текст статуса -->
+                                <TextBlock Foreground="{StaticResource TextBrush}"
+                                           FontWeight="SemiBold"
+                                           FontSize="11"
+                                           VerticalAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           MaxWidth="120">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="Выберите корабль"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsManualPlacementValid}" Value="True">
+                                                    <Setter Property="Text" Value="Все корабли размещены"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Border>
+
+                <!-- Центральная часть: горизонтальный список кораблей -->
+                <ScrollViewer Grid.Column="1"
+                              VerticalScrollBarVisibility="Disabled"
+                              HorizontalScrollBarVisibility="Auto"
+                              Margin="10">
+                    <StackPanel Orientation="Horizontal">
+                        <ItemsControl ItemsSource="{Binding AvailableShips}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="5,0"
+                                            Padding="10,8"
+                                            CornerRadius="5"
+                                            BorderBrush="{StaticResource DarkBrush}"
+                                            BorderThickness="1"
+                                            Cursor="Hand"
+                                            Width="110"
+                                            Height="140">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <!-- Размещенный корабль - светло-зеленый -->
+                                                <Setter Property="Background" Value="{StaticResource WaterBrush}"/>
+                                                <Style.Triggers>
+                                                    <!-- Выбранный корабль - сиреневый -->
+                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+                                                        <Setter Property="BorderBrush" Value="{StaticResource DarkBrush}"/>
+                                                        <Setter Property="BorderThickness" Value="2"/>
+                                                    </DataTrigger>
+                                                    <!-- Размещенный корабль - светло-зеленый -->
+                                                    <DataTrigger Binding="{Binding IsPlaced}" Value="True">
+                                                        <Setter Property="Background" Value="#E8F5E9"/>
+                                                        <Setter Property="BorderBrush" Value="#4CAF50"/>
+                                                    </DataTrigger>
+                                                    <!-- При наведении -->
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Размер корабля -->
+                                            <TextBlock Grid.Row="0"
+                                                       Text="{Binding Size, StringFormat={}{0}-палубный}" 
+                                                       Foreground="{StaticResource TextBrush}"
+                                                       FontWeight="Bold"
+                                                       FontSize="14"
+                                                       HorizontalAlignment="Center"
+                                                       Margin="0,0,0,5"/>
+
+                                            <!-- Визуализация корабля -->
+                                            <Border Grid.Row="1"
+                                                    Height="24" 
+                                                    Margin="10,0"
+                                                    VerticalAlignment="Center"
+                                                    HorizontalAlignment="Center">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Width" Value="30"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Size}" Value="2">
+                                                                <Setter Property="Width" Value="55"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Size}" Value="3">
+                                                                <Setter Property="Width" Value="80"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Size}" Value="4">
+                                                                <Setter Property="Width" Value="105"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+
+                                                <Rectangle Fill="{StaticResource ShipBrush}"
+                                                           RadiusX="3" 
+                                                           RadiusY="3"
+                                                           Stroke="Black"
+                                                           StrokeThickness="1">
+                                                    <Rectangle.Style>
+                                                        <Style TargetType="Rectangle">
+                                                            <Setter Property="LayoutTransform">
+                                                                <Setter.Value>
+                                                                    <RotateTransform Angle="0"/>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Direction}" Value="Vertical">
+                                                                    <Setter Property="LayoutTransform">
+                                                                        <Setter.Value>
+                                                                            <RotateTransform Angle="90"/>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Rectangle.Style>
+                                                </Rectangle>
+                                            </Border>
+
+                                            <!-- Кнопки управления и статус -->
+                                            <StackPanel Grid.Row="2"
+                                                        Orientation="Horizontal" 
+                                                        HorizontalAlignment="Center"
+                                                        Margin="0,5,0,0">
+                                                <!-- Кнопка выбора -->
+                                                <Button Content="✓" 
+                                                        Width="24" 
+                                                        Height="24"
+                                                        Margin="0,0,5,0"
+                                                        Command="{Binding DataContext.SelectShipCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="Выбрать корабль"
+                                                        Cursor="Hand">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
+                                                            <Setter Property="Background" Value="{StaticResource SecondaryBrush}"/>
+                                                            <Setter Property="Padding" Value="0"/>
+                                                            <Style.Triggers>
+                                                                <!-- Размещенный корабль - зеленая галочка -->
+                                                                <DataTrigger Binding="{Binding IsPlaced}" Value="True">
+                                                                    <Setter Property="Background" Value="#4CAF50"/>
+                                                                    <Setter Property="Foreground" Value="White"/>
+                                                                </DataTrigger>
+                                                                <!-- Выбранный корабль -->
+                                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource DarkBrush}"/>
+                                                                    <Setter Property="Foreground" Value="White"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+
+                                                <!-- Кнопка удаления -->
+                                                <Button Content="×" 
+                                                        Width="24" 
+                                                        Height="24"
+                                                        Command="{Binding DataContext.RemoveShipCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="Удалить корабль"
+                                                        Cursor="Hand">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
+                                                            <Setter Property="Background" Value="{StaticResource SecondaryBrush}"/>
+                                                            <Setter Property="Padding" Value="0"/>
+                                                            <Setter Property="IsEnabled" Value="False"/>
+                                                            <Style.Triggers>
+                                                                <!-- Размещенный корабль - красный крестик -->
+                                                                <DataTrigger Binding="{Binding IsPlaced}" Value="True">
+                                                                    <Setter Property="IsEnabled" Value="True"/>
+                                                                    <Setter Property="Background" Value="#FF6B6B"/>
+                                                                    <Setter Property="Foreground" Value="White"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Правая часть: инструкция -->
+                <Border Grid.Column="2"
+                        Background="{StaticResource PrimaryBrush}"
+                        Width="200"
+                        BorderBrush="{StaticResource DarkBrush}"
+                        BorderThickness="1,0,0,0">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="10">
+                            <TextBlock Text="Инструкция:"
+                                       Foreground="{StaticResource TextBrush}"
+                                       FontWeight="SemiBold"
+                                       FontSize="14"
+                                       Margin="0,0,0,8"/>
+
+                            <StackPanel>
+                                <TextBlock Text="1. Выберите корабль"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="11"
+                                           Margin="0,0,0,3"
+                                           TextWrapping="Wrap"/>
+                                <TextBlock Text="2. Наведите на поле для предпросмотра"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="11"
+                                           Margin="0,0,0,3"
+                                           TextWrapping="Wrap"/>
+                                <TextBlock Text="3. Кликните для размещения"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="11"
+                                           Margin="0,0,0,3"
+                                           TextWrapping="Wrap"/>
+                                <TextBlock Text="4. Красная подсветка = нельзя разместить"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="11"
+                                           Margin="0,0,0,3"
+                                           TextWrapping="Wrap"/>
+                                <TextBlock Text="5. Нажмите 'Готов' когда все корабли расставлены"
+                                           Foreground="{StaticResource TextBrush}"
+                                           FontSize="11"
+                                           FontWeight="Bold"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
             </Grid>
-        </Grid>
+        </Border>
     </Grid>
 </Window>

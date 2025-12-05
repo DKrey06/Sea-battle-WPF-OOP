@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
@@ -32,7 +32,7 @@ namespace Sea_battle_WPF.Core.Services
         // НОВЫЕ события
         public event Action<string> OnPlayerReady;
         public event Action<string> OnPlayerDisconnected;
-        public event Action<Dictionary<string, PlayerStatus>> OnRoomStateReceived; // Новое событие
+        public event Action<string> OnShipsPlacedNotify; // Новое событие
 
         public async Task<bool> Connect(string serverIp = "127.0.0.1", int port = 8888)
         {
@@ -108,17 +108,18 @@ namespace Sea_battle_WPF.Core.Services
                         OnPlayerJoined?.Invoke(gameMessage.Data);
                         break;
 
-                    case "ROOM_STATE":
-                        // НОВОЕ: Обработка полного состояния комнаты
-                        var roomState = JsonConvert.DeserializeObject<Dictionary<string, PlayerStatus>>(gameMessage.Data);
-                        OnRoomStateReceived?.Invoke(roomState);
-                        break;
-
                     case "PLAYER_READY":
+                        // НОВОЕ: Обработка готовности игрока
                         OnPlayerReady?.Invoke(gameMessage.Data);
                         break;
 
+                    case "SHIPS_PLACED_NOTIFY":
+                        // НОВОЕ: Обработка уведомления о расстановке кораблей
+                        OnShipsPlacedNotify?.Invoke(gameMessage.Data);
+                        break;
+
                     case "PLAYER_DISCONNECTED":
+                        // НОВОЕ: Обработка отключения игрока
                         OnPlayerDisconnected?.Invoke(gameMessage.Data);
                         break;
 
@@ -211,12 +212,6 @@ namespace Sea_battle_WPF.Core.Services
         public string Data { get; set; }
         public string PlayerId { get; set; }
         public string RoomId { get; set; }
-    }
-
-    public class PlayerStatus
-    {
-        public bool IsReady { get; set; }
-        public bool ShipsPlaced { get; set; }
     }
 
     public class ShipPlacement

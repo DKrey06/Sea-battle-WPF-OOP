@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -27,11 +27,12 @@ namespace SeaBattle.Server
 
     public class GameState
     {
-        public Dictionary<string, PlayerStatus> PlayerStatuses { get; set; } = new Dictionary<string, PlayerStatus>();
+        public Dictionary<string, bool> PlayersReady { get; set; } = new Dictionary<string, bool>();
+        public Dictionary<string, bool> ShipsPlaced { get; set; } = new Dictionary<string, bool>();
         public Dictionary<string, List<ShipPlacement>> PlayerShips { get; set; } = new Dictionary<string, List<ShipPlacement>>();
         public Dictionary<string, List<Shot>> PlayerShots { get; set; } = new Dictionary<string, List<Shot>>();
-        public bool GameStarted => PlayerStatuses.Count == 2 &&
-                                   PlayerStatuses.All(p => p.Value.IsReady && p.Value.ShipsPlaced);
+        public bool GameStarted => PlayersReady.Count == 2 && PlayersReady.All(p => p.Value) &&
+                                   ShipsPlaced.Count == 2 && ShipsPlaced.All(p => p.Value);
 
         public string CheckWinner()
         {
@@ -49,12 +50,6 @@ namespace SeaBattle.Server
             }
             return null;
         }
-    }
-
-    public class PlayerStatus
-    {
-        public bool IsReady { get; set; }
-        public bool ShipsPlaced { get; set; }
     }
 
     public class ShipPlacement
@@ -314,8 +309,8 @@ namespace SeaBattle.Server
 
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игрок присоединился к комнате {roomId}. Комната заполнена!");
 
-                // Отправляем полное состояние комнаты обоим игрокам
-                SendFullRoomState(roomId, room);
+                // ОТПРАВЛЯЕМ НОВОМУ ИГРОКУ СОСТОЯНИЕ КОМНАТЫ
+                SendRoomStateToPlayer(client, roomId, room);
             }
             else
             {
@@ -323,27 +318,45 @@ namespace SeaBattle.Server
             }
         }
 
-        private void SendFullRoomState(string roomId, GameRoom room)
+        private void SendRoomStateToPlayer(ClientHandler client, string roomId, GameRoom room)
         {
             try
             {
-                // Создаем словарь с состояниями всех игроков
-                var roomState = new Dictionary<string, PlayerStatus>();
-
-                foreach (var playerStatus in room.GameState.PlayerStatuses)
+                // Отправляем информацию о готовности другого игрока
+                foreach (var playerReady in room.GameState.PlayersReady)
                 {
-                    roomState[playerStatus.Key] = playerStatus.Value;
+                    if (playerReady.Key != client.ClientId && playerReady.Value)
+                    {
+                        var readyMessage = new GameMessage
+                        {
+                            Type = "PLAYER_READY",
+                            RoomId = roomId,
+                            PlayerId = playerReady.Key,
+                            Data = playerReady.Key
+                        };
+
+                        client.SendMessage(JsonConvert.SerializeObject(readyMessage));
+                        Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Отправлено состояние готовности игрока {playerReady.Key.Substring(0, 8)} новому игроку");
+                    }
                 }
 
-                var roomStateMessage = new GameMessage
+                // Отправляем информацию о расставленных кораблях другого игрока
+                foreach (var shipsPlaced in room.GameState.ShipsPlaced)
                 {
-                    Type = "ROOM_STATE",
-                    RoomId = roomId,
-                    Data = JsonConvert.SerializeObject(roomState)
-                };
+                    if (shipsPlaced.Key != client.ClientId && shipsPlaced.Value)
+                    {
+                        var shipsMessage = new GameMessage
+                        {
+                            Type = "SHIPS_PLACED_NOTIFY",
+                            RoomId = roomId,
+                            PlayerId = shipsPlaced.Key,
+                            Data = shipsPlaced.Key
+                        };
 
-                BroadcastToRoom(roomId, roomStateMessage);
-                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Отправлено полное состояние комнаты {roomId} всем игрокам");
+                        client.SendMessage(JsonConvert.SerializeObject(shipsMessage));
+                        Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Отправлено состояние кораблей игрока {shipsPlaced.Key.Substring(0, 8)} новому игроку");
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -355,18 +368,19 @@ namespace SeaBattle.Server
         {
             if (rooms.TryGetValue(roomId, out var room))
             {
-                // Инициализируем статус игрока, если его еще нет
-                if (!room.GameState.PlayerStatuses.ContainsKey(client.ClientId))
+                room.GameState.PlayersReady[client.ClientId] = true;
+
+                // Отправляем уведомление обоим игрокам о готовности
+                var readyMessage = new GameMessage
                 {
-                    room.GameState.PlayerStatuses[client.ClientId] = new PlayerStatus();
-                }
+                    Type = "PLAYER_READY",
+                    RoomId = roomId,
+                    PlayerId = client.ClientId,
+                    Data = client.ClientId // ID игрока, который готов
+                };
 
-                room.GameState.PlayerStatuses[client.ClientId].IsReady = true;
-
-                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игрок {client.ClientId.Substring(0, 8)} готов в комнате {roomId}");
-
-                // Отправляем обновленное состояние комнаты всем
-                SendFullRoomState(roomId, room);
+                BroadcastToRoom(roomId, readyMessage);
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игрок {client.ClientId.Substring(0, 8)} готов в комнате {roomId}. Уведомление отправлено.");
 
                 // Проверяем, можно ли начать игру
                 CheckAndStartGame(roomId, room);
@@ -378,19 +392,20 @@ namespace SeaBattle.Server
             if (rooms.TryGetValue(roomId, out var room))
             {
                 room.GameState.PlayerShips[client.ClientId] = ships;
-
-                // Инициализируем статус игрока, если его еще нет
-                if (!room.GameState.PlayerStatuses.ContainsKey(client.ClientId))
-                {
-                    room.GameState.PlayerStatuses[client.ClientId] = new PlayerStatus();
-                }
-
-                room.GameState.PlayerStatuses[client.ClientId].ShipsPlaced = true;
+                room.GameState.ShipsPlaced[client.ClientId] = true;
 
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игрок {client.ClientId.Substring(0, 8)} расставил корабли в комнате {roomId}");
 
-                // Отправляем обновленное состояние комнаты всем
-                SendFullRoomState(roomId, room);
+                // Отправляем уведомление обоим игрокам о расстановке кораблей
+                var shipsMessage = new GameMessage
+                {
+                    Type = "SHIPS_PLACED_NOTIFY",
+                    RoomId = roomId,
+                    PlayerId = client.ClientId,
+                    Data = client.ClientId
+                };
+
+                BroadcastToRoom(roomId, shipsMessage);
 
                 // Проверяем, можно ли начать игру
                 CheckAndStartGame(roomId, room);
@@ -399,11 +414,6 @@ namespace SeaBattle.Server
 
         private void CheckAndStartGame(string roomId, GameRoom room)
         {
-            var readyCount = room.GameState.PlayerStatuses.Count(p => p.Value.IsReady);
-            var shipsCount = room.GameState.PlayerStatuses.Count(p => p.Value.ShipsPlaced);
-
-            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Статус комнаты {roomId}: {readyCount}/2 готовы, {shipsCount}/2 расставили корабли");
-
             if (room.GameState.GameStarted)
             {
                 // Определяем, кто ходит первым
@@ -419,6 +429,12 @@ namespace SeaBattle.Server
                 BroadcastToRoom(roomId, startMessage);
 
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Игра началась в комнате {roomId}! Первый ход у игрока {room.CurrentPlayerTurn.Substring(0, 8)}");
+            }
+            else
+            {
+                var readyCount = room.GameState.PlayersReady.Count(p => p.Value);
+                var shipsCount = room.GameState.ShipsPlaced.Count(p => p.Value);
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Статус комнаты {roomId}: {readyCount}/2 готовы, {shipsCount}/2 расставили корабли");
             }
         }
 

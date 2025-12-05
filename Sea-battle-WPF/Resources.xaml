@@ -92,4 +92,6 @@
         </Style.Triggers>
     </Style>
 
+    <RotateTransform x:Key="RotateTransform90" Angle="90"/>
+
 </ResourceDictionary>
