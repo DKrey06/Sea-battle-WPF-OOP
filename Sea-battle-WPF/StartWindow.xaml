@@ -42,36 +42,42 @@
 
         <!-- Кнопки -->
         <StackPanel Grid.Row="2" 
-                    VerticalAlignment="Center" 
-                    HorizontalAlignment="Center"
-                    Width="250">
+            VerticalAlignment="Center" 
+            HorizontalAlignment="Center"
+            Width="250">
 
             <Button Content="🎮 Играть с компьютером" 
-                    Style="{StaticResource ModernButton}"
-                    Height="50"
-                    FontSize="16"
-                    Click="StartSinglePlayer_Click"/>
+            Style="{StaticResource ModernButton}"
+            Height="50"
+            FontSize="16"
+            Click="StartSinglePlayer_Click"/>
+
+            <!-- НОВАЯ КНОПКА -->
+            <Button Content="👥 Локальная игра" 
+            Style="{StaticResource ModernButton}"
+            Height="50"
+            FontSize="16"
+            Click="StartHotSeat_Click"/>
 
             <Button Content="🌐 Играть по сети" 
-                    Style="{StaticResource ModernButton}"
-                    Height="50"
-                    FontSize="16"
-                    Click="StartMultiplayer_Click"/>
+            Style="{StaticResource ModernButton}"
+            Height="50"
+            FontSize="16"
+            Click="StartMultiplayer_Click"/>
 
             <Button Content="🚪 Выйти" 
-                    Style="{StaticResource ModernButton}"
-                    Height="50"
-                    FontSize="16"
-                    Margin="5"
-                    Click="ExitButton_Click"/>
+            Style="{StaticResource ModernButton}"
+            Height="50"
+            FontSize="16"
+            Margin="5"
+            Click="ExitButton_Click"/>
 
         </StackPanel>
 
         <!-- Нижняя панелька -->
         <Border Grid.Row="3" 
                 Background="{StaticResource AccentBrush}"
-                Height="40"
-                CornerRadius="10,10,0,0">
+                CornerRadius="10,10,0,0" Margin="0,10,0,0">
             <TextBlock Text="By DKrey and Yanl1n, 2025" 
                        Foreground="{StaticResource TextBrush}"
                        FontSize="16"

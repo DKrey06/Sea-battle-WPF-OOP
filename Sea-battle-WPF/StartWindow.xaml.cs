@@ -40,5 +40,12 @@ namespace Sea_battle_WPF
         {
             Application.Current.Shutdown();
         }
+
+        private void StartHotSeat_Click(object sender, RoutedEventArgs e)
+        {
+            var hotSeatWindow = new HotSeatWindow();
+            hotSeatWindow.Show();
+            this.Close();
+        }
     }
 }
