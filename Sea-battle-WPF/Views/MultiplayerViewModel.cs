@@ -31,7 +31,6 @@ namespace Sea_battle_WPF.ViewModels
         private bool _isGameStarted;
         private string _opponentId;
         private bool _shipsSent;
-        private bool _receivedPlayerJoined = false;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -93,6 +92,7 @@ namespace Sea_battle_WPF.ViewModels
             {
                 _isReady = value;
                 OnPropertyChanged();
+                UpdateStatusFromState();
             }
         }
 
@@ -126,19 +126,12 @@ namespace Sea_battle_WPF.ViewModels
                 _isGameStarted = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(CanPlaceShips));
-                if (value)
-                {
-                    // При начале игры обновляем статусы
-                    IsOpponentReady = true;
-                    IsOpponentShipsPlaced = true;
-                    UpdateOpponentStatus();
-                }
+                UpdateStatusFromState();
             }
         }
 
         public bool CanPlaceShips => IsConnected && !IsGameStarted;
         public bool CanCreateOrJoin => IsConnected && !IsGameStarted;
-        public bool CanStartGame => false; // Теперь это полностью контролируется сервером
 
         public ObservableCollection<ShipViewModel> AvailableShips { get; } = new ObservableCollection<ShipViewModel>();
         public ObservableCollection<CellViewModel> PlayerCells { get; } = new ObservableCollection<CellViewModel>();
@@ -206,72 +199,45 @@ namespace Sea_battle_WPF.ViewModels
                     if (playerId != _networkService.PlayerId)
                     {
                         _opponentId = playerId;
-                        _receivedPlayerJoined = true;
                         OpponentStatus = "Соперник присоединился";
                         GameStatus = "Соперник найден. Расставьте корабли и нажмите 'Готов'";
                     }
                 });
             };
 
-            // Обработка готовности противника
-            _networkService.OnPlayerReady += (playerId) =>
+            // НОВОЕ: Обработка полного состояния комнаты
+            _networkService.OnRoomStateReceived += (roomState) =>
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    if (playerId != _networkService.PlayerId)
+                    foreach (var playerState in roomState)
                     {
-                        // Если мы еще не знаем ID противника, устанавливаем его
-                        if (_opponentId == null)
-                        {
-                            _opponentId = playerId;
-                            _receivedPlayerJoined = true;
-                        }
+                        var playerId = playerState.Key;
+                        var status = playerState.Value;
 
-                        // Обновляем статус готовности
-                        if (playerId == _opponentId)
+                        if (playerId == _networkService.PlayerId)
                         {
-                            IsOpponentReady = true;
+                            // Наш собственный статус
+                            IsReady = status.IsReady;
+                            if (status.ShipsPlaced && !_shipsSent)
+                            {
+                                _shipsSent = true;
+                            }
+                        }
+                        else if (playerId == _opponentId || _opponentId == null)
+                        {
+                            // Статус противника
+                            if (_opponentId == null)
+                            {
+                                _opponentId = playerId;
+                            }
+
+                            IsOpponentReady = status.IsReady;
+                            IsOpponentShipsPlaced = status.ShipsPlaced;
                         }
                     }
-                });
-            };
 
-            // Обработка расстановки кораблей противником
-            _networkService.OnShipsPlacedNotify += (playerId) =>
-            {
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    if (playerId != _networkService.PlayerId)
-                    {
-                        // Если мы еще не знаем ID противника, устанавливаем его
-                        if (_opponentId == null)
-                        {
-                            _opponentId = playerId;
-                        }
-
-                        // Обновляем статус расстановки кораблей
-                        if (playerId == _opponentId)
-                        {
-                            IsOpponentShipsPlaced = true;
-                        }
-                    }
-                });
-            };
-
-            // Обработка отключения игрока
-            _networkService.OnPlayerDisconnected += (playerId) =>
-            {
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    if (_opponentId == null || playerId == _opponentId)
-                    {
-                        ResetConnectionState();
-                        GameStatus = "Соперник отключился";
-                        OpponentStatus = "Соперник отключился";
-
-                        MessageBox.Show("Соперник отключился от игры.", "Игра прервана",
-                            MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
+                    UpdateStatusFromState();
                 });
             };
 
@@ -279,13 +245,8 @@ namespace Sea_battle_WPF.ViewModels
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    // СЕРВЕР СКАЗАЛ ЧТО ИГРА НАЧАЛАСЬ - ЗНАЧИТ ОБА ГОТОВЫ!
                     IsGameStarted = true;
-                    IsOpponentReady = true;
-                    IsOpponentShipsPlaced = true;
-
-                    GameStatus = "Игра началась!";
-                    OpponentStatus = "Соперник готов";
+                    UpdateStatusFromState();
 
                     if (_networkService.IsMyTurn)
                     {
@@ -385,15 +346,26 @@ namespace Sea_battle_WPF.ViewModels
             };
         }
 
-        private void ResetConnectionState()
+        private void UpdateStatusFromState()
         {
-            IsGameStarted = false;
-            IsReady = false;
-            IsOpponentReady = false;
-            IsOpponentShipsPlaced = false;
-            _opponentId = null;
-            _receivedPlayerJoined = false;
-            _shipsSent = false;
+            if (IsGameStarted)
+            {
+                GameStatus = "Игра идет...";
+                OpponentStatus = "Соперник готов";
+            }
+            else if (IsOpponentReady && IsOpponentShipsPlaced && IsReady && _shipsSent)
+            {
+                GameStatus = "Оба игрока готовы! Игра скоро начнется...";
+                OpponentStatus = "Соперник готов";
+            }
+            else if (_opponentId != null)
+            {
+                GameStatus = "Расставьте корабли и нажмите 'Готов'";
+            }
+            else if (IsRoomCreator)
+            {
+                GameStatus = $"Комната {RoomId} создана. Ждите соперника";
+            }
         }
 
         private void UpdateOpponentStatus()
@@ -414,6 +386,16 @@ namespace Sea_battle_WPF.ViewModels
             {
                 OpponentStatus = "Ожидание соперника...";
             }
+        }
+
+        private void ResetConnectionState()
+        {
+            IsGameStarted = false;
+            IsReady = false;
+            IsOpponentReady = false;
+            IsOpponentShipsPlaced = false;
+            _opponentId = null;
+            _shipsSent = false;
         }
 
         private async Task Connect()
@@ -502,14 +484,12 @@ namespace Sea_battle_WPF.ViewModels
 
             if (IsReady && !_shipsSent)
             {
-                // Если уже нажали "Готов", но еще не отправляли корабли
                 var ships = ConvertShipsToNetworkFormat();
                 _networkService.SendShips(ships);
                 _shipsSent = true;
             }
             else if (_shipsSent)
             {
-                // Если уже отправляли корабли, отправляем заново
                 var ships = ConvertShipsToNetworkFormat();
                 _networkService.SendShips(ships);
             }
