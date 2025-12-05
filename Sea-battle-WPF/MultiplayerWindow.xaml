@@ -6,24 +6,12 @@
         xmlns:local="clr-namespace:Sea_battle_WPF"
         xmlns:viewmodels="clr-namespace:Sea_battle_WPF.ViewModels"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-        xmlns:converters="clr-namespace:Sea_battle_WPF"
         mc:Ignorable="d"
         Title="Морской бой - Сетевая игра" 
         Height="900" 
         Width="1400"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource PrimaryBrush}">
-
-    <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Resources.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
-            <converters:BoolToReadyConverter x:Key="BoolToReadyConverter"/>
-            <converters:ReadyColorConverter x:Key="ReadyColorConverter"/>
-            <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
-        </ResourceDictionary>
-    </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -97,7 +85,8 @@
                     Background="{StaticResource SecondaryBrush}"
                     CornerRadius="10"
                     BorderBrush="{StaticResource DarkBrush}"
-                    BorderThickness="2" Margin="0,0,0,164">
+                    BorderThickness="2"
+                    Margin="0,0,0,0">
 
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="15">
@@ -129,13 +118,15 @@
                                 Command="{Binding ConnectCommand}"
                                 Style="{StaticResource ModernButton}"
                                 Height="35"
-                                Margin="0,0,0,10"/>
+                                Margin="0,0,0,10"
+                                IsEnabled="{Binding IsConnected, Converter={StaticResource InverseBooleanConverter}}"/>
 
                         <Button Content="Создать комнату"
                                 Command="{Binding CreateRoomCommand}"
                                 Style="{StaticResource ModernButton}"
                                 Height="35"
-                                Margin="0,0,0,10"/>
+                                Margin="0,0,0,10"
+                                IsEnabled="{Binding IsConnected}"/>
 
                         <!-- Ввод ID комнаты -->
                         <TextBlock Text="Введите ID комнаты:"
@@ -148,14 +139,16 @@
                                  Margin="0,0,0,5"
                                  FontSize="16"
                                  FontWeight="Bold"
-                                 TextAlignment="Center"/>
+                                 TextAlignment="Center"
+                                 IsEnabled="{Binding IsConnected}"/>
 
                         <Button Content="Присоединиться"
                                 Command="{Binding JoinRoomCommand}"
                                 CommandParameter="{Binding Text, ElementName=RoomIdInput}"
                                 Style="{StaticResource ModernButton}"
                                 Height="35"
-                                Margin="0,5,0,15"/>
+                                Margin="0,5,0,15"
+                                IsEnabled="{Binding IsConnected}"/>
 
                         <!-- Информация о комнате -->
                         <Border CornerRadius="8"
@@ -220,15 +213,16 @@
                         <Button Content="Готов"
                                 Command="{Binding ReadyCommand}"
                                 Height="40"
-                                Margin="0,0,0,10">
+                                Margin="0,0,0,10"
+                                IsEnabled="{Binding IsManualPlacementValid}">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
-                                    <Setter Property="IsEnabled" Value="{Binding IsManualPlacementValid}"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsReady}" Value="True">
                                             <Setter Property="Background" Value="#4CAF50"/>
                                             <Setter Property="Foreground" Value="White"/>
                                             <Setter Property="Content" Value="✓ Готов"/>
+                                            <Setter Property="IsEnabled" Value="False"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding IsManualPlacementValid}" Value="False">
                                             <Setter Property="Background" Value="#CCCCCC"/>
@@ -246,13 +240,9 @@
                             <Button Content="Авторасстановка"
                                     Command="{Binding AutoArrangeCommand}"
                                     Height="35"
-                                    Margin="0,0,0,8">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource ModernButton}">
-                                        <Setter Property="IsEnabled" Value="{Binding CanPlaceShips}"/>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
+                                    Margin="0,0,0,8"
+                                    Style="{StaticResource ModernButton}"
+                                    IsEnabled="{Binding CanPlaceShips}"/>
 
                             <!-- Сдаться -->
                             <Button Content="Сдаться"
@@ -362,26 +352,27 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Style="{StaticResource CellStyle}">
-                                        <Border Background="{Binding CellColor}">
-                                            <i:Interaction.Triggers>
-                                                <i:EventTrigger EventName="MouseLeftButtonDown">
-                                                    <i:InvokeCommandAction 
-                                                        Command="{Binding DataContext.PlayerCellClickCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                                                        CommandParameter="{Binding}"/>
-                                                </i:EventTrigger>
-                                                <i:EventTrigger EventName="MouseEnter">
-                                                    <i:InvokeCommandAction 
-                                                        Command="{Binding DataContext.PlayerCellMouseEnterCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                                                        CommandParameter="{Binding}"/>
-                                                </i:EventTrigger>
-                                                <i:EventTrigger EventName="MouseLeave">
-                                                    <i:InvokeCommandAction 
-                                                        Command="{Binding DataContext.PlayerCellMouseLeaveCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                                                        CommandParameter="{Binding}"/>
-                                                </i:EventTrigger>
-                                            </i:Interaction.Triggers>
-                                        </Border>
+                                    <Border Width="30" Height="30" 
+                                            BorderBrush="Black" 
+                                            BorderThickness="1"
+                                            Background="{Binding CellColor}">
+                                        <i:Interaction.Triggers>
+                                            <i:EventTrigger EventName="MouseLeftButtonDown">
+                                                <i:InvokeCommandAction 
+                                                    Command="{Binding DataContext.PlayerCellClickCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                    CommandParameter="{Binding}"/>
+                                            </i:EventTrigger>
+                                            <i:EventTrigger EventName="MouseEnter">
+                                                <i:InvokeCommandAction 
+                                                    Command="{Binding DataContext.PlayerCellMouseEnterCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                    CommandParameter="{Binding}"/>
+                                            </i:EventTrigger>
+                                            <i:EventTrigger EventName="MouseLeave">
+                                                <i:InvokeCommandAction 
+                                                    Command="{Binding DataContext.PlayerCellMouseLeaveCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                    CommandParameter="{Binding}"/>
+                                            </i:EventTrigger>
+                                        </i:Interaction.Triggers>
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -453,16 +444,17 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Style="{StaticResource CellStyle}">
-                                        <Border Background="{Binding CellColor}">
-                                            <i:Interaction.Triggers>
-                                                <i:EventTrigger EventName="MouseLeftButtonDown">
-                                                    <i:InvokeCommandAction 
-                                                        Command="{Binding DataContext.CellClickCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                                                        CommandParameter="{Binding}"/>
-                                                </i:EventTrigger>
-                                            </i:Interaction.Triggers>
-                                        </Border>
+                                    <Border Width="30" Height="30" 
+                                            BorderBrush="Black" 
+                                            BorderThickness="1"
+                                            Background="{Binding CellColor}">
+                                        <i:Interaction.Triggers>
+                                            <i:EventTrigger EventName="MouseLeftButtonDown">
+                                                <i:InvokeCommandAction 
+                                                    Command="{Binding DataContext.CellClickCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                    CommandParameter="{Binding}"/>
+                                            </i:EventTrigger>
+                                        </i:Interaction.Triggers>
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -535,7 +527,7 @@
                                 Margin="0,0,0,10"
                                 Height="32"
                                 FontSize="12"
-                                ToolTip="Удалить все корабли и расставить автоматически"/>
+                                ToolTip="Удалить все корабли"/>
 
                         <!-- Статус расстановки -->
                         <Border CornerRadius="6"
@@ -630,21 +622,17 @@
                                             Height="140">
                                         <Border.Style>
                                             <Style TargetType="Border">
-                                                <!-- Размещенный корабль - светло-зеленый -->
                                                 <Setter Property="Background" Value="{StaticResource WaterBrush}"/>
                                                 <Style.Triggers>
-                                                    <!-- Выбранный корабль - сиреневый -->
                                                     <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                         <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
                                                         <Setter Property="BorderBrush" Value="{StaticResource DarkBrush}"/>
                                                         <Setter Property="BorderThickness" Value="2"/>
                                                     </DataTrigger>
-                                                    <!-- Размещенный корабль - светло-зеленый -->
                                                     <DataTrigger Binding="{Binding IsPlaced}" Value="True">
                                                         <Setter Property="Background" Value="#E8F5E9"/>
                                                         <Setter Property="BorderBrush" Value="#4CAF50"/>
                                                     </DataTrigger>
-                                                    <!-- При наведении -->
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
                                                     </Trigger>
@@ -736,12 +724,10 @@
                                                             <Setter Property="Background" Value="{StaticResource SecondaryBrush}"/>
                                                             <Setter Property="Padding" Value="0"/>
                                                             <Style.Triggers>
-                                                                <!-- Размещенный корабль - зеленая галочка -->
                                                                 <DataTrigger Binding="{Binding IsPlaced}" Value="True">
                                                                     <Setter Property="Background" Value="#4CAF50"/>
                                                                     <Setter Property="Foreground" Value="White"/>
                                                                 </DataTrigger>
-                                                                <!-- Выбранный корабль -->
                                                                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                                     <Setter Property="Background" Value="{StaticResource DarkBrush}"/>
                                                                     <Setter Property="Foreground" Value="White"/>
@@ -765,7 +751,6 @@
                                                             <Setter Property="Padding" Value="0"/>
                                                             <Setter Property="IsEnabled" Value="False"/>
                                                             <Style.Triggers>
-                                                                <!-- Размещенный корабль - красный крестик -->
                                                                 <DataTrigger Binding="{Binding IsPlaced}" Value="True">
                                                                     <Setter Property="IsEnabled" Value="True"/>
                                                                     <Setter Property="Background" Value="#FF6B6B"/>
@@ -804,22 +789,17 @@
                                            FontSize="11"
                                            Margin="0,0,0,3"
                                            TextWrapping="Wrap"/>
-                                <TextBlock Text="2. Наведите на поле для предпросмотра"
+                                <TextBlock Text="2. Кликните на поле для размещения"
                                            Foreground="{StaticResource TextBrush}"
                                            FontSize="11"
                                            Margin="0,0,0,3"
                                            TextWrapping="Wrap"/>
-                                <TextBlock Text="3. Кликните для размещения"
+                                <TextBlock Text="3. Все корабли должны быть размещены"
                                            Foreground="{StaticResource TextBrush}"
                                            FontSize="11"
                                            Margin="0,0,0,3"
                                            TextWrapping="Wrap"/>
-                                <TextBlock Text="4. Красная подсветка = нельзя разместить"
-                                           Foreground="{StaticResource TextBrush}"
-                                           FontSize="11"
-                                           Margin="0,0,0,3"
-                                           TextWrapping="Wrap"/>
-                                <TextBlock Text="5. Нажмите 'Готов' когда все корабли расставлены"
+                                <TextBlock Text="4. Нажмите 'Готов' когда все корабли расставлены"
                                            Foreground="{StaticResource TextBrush}"
                                            FontSize="11"
                                            FontWeight="Bold"
