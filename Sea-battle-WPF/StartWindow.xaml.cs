@@ -30,7 +30,10 @@ namespace Sea_battle_WPF
 
         private void StartMultiplayer_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Сетевую игру добавим позже :(", ":(", MessageBoxButton.OK, MessageBoxImage.Information);
+            // Теперь открываем реальное окно мультиплеера
+            var multiplayerWindow = new MultiplayerWindow();
+            multiplayerWindow.Show();
+            this.Close();
         }
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)

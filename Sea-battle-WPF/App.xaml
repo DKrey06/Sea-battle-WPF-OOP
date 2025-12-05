@@ -7,7 +7,13 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources.xaml"/>
+                
             </ResourceDictionary.MergedDictionaries>
+            <local:BoolToReadyConverter x:Key="BoolToReadyConverter"/>
+            <local:ReadyColorConverter x:Key="ReadyColorConverter"/>
+
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+            <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
