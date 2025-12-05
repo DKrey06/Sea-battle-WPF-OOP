@@ -44,7 +44,7 @@ namespace SeaBattle.Server
 
                 bool allShipsSunk = playerShips.All(ship =>
                     ship.Cells.All(cell =>
-                        opponentShots.Any(shot => shot.X == cell.X && shot.Y == shot.Y)));
+                        opponentShots.Any(shot => shot.X == cell.X && shot.Y == cell.Y && shot.IsHit))); // Исправлено!
 
                 if (allShipsSunk) return opponent;
             }
