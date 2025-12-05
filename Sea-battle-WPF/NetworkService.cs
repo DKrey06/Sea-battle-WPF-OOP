@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using Newtonsoft.Json;
 
 namespace Sea_battle_WPF.Core.Services
@@ -52,9 +53,9 @@ namespace Sea_battle_WPF.Core.Services
 
         public void Disconnect()
         {
-            receiveThread?.Abort();
             stream?.Close();
             client?.Close();
+            Application.Current.Shutdown();
         }
 
         private void StartReceiving()

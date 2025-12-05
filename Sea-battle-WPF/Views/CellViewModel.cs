@@ -19,7 +19,7 @@ namespace Sea_battle_WPF.ViewModels
         private bool _isDragOver;
 
         public event PropertyChangedEventHandler PropertyChanged;
-        public CellState CellState => _cell.State;
+        //public CellState CellState => _cell.State;
         public int X { get; }
         public int Y { get; }
 
