@@ -18,8 +18,6 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-
-            <!-- Добавляем конвертеры здесь -->
             <local:BoolToReadyConverter x:Key="BoolToReadyConverter"/>
             <local:ReadyColorConverter x:Key="ReadyColorConverter"/>
             <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
@@ -119,7 +117,7 @@
                             Margin="0,0,0,10"
                             IsEnabled="{Binding IsConnected, Converter={StaticResource InverseBooleanConverter}}"/>
 
-                    <!-- КНОПКА СОЗДАНИЯ КОМНАТЫ - ДОБАВЛЯЕМ IsEnabled -->
+                    <!-- КНОПКА СОЗДАНИЯ КОМНАТЫ -->
                     <Button Content="Создать комнату"
                             Command="{Binding CreateRoomCommand}"
                             Style="{StaticResource ModernButton}"
@@ -137,7 +135,7 @@
                      Margin="0,0,0,5"
                      IsEnabled="{Binding CanJoinRoom}"/>
 
-                    <!-- КНОПКА ПРИСОЕДИНЕНИЯ - ДОБАВЛЯЕМ IsEnabled -->
+                    <!-- КНОПКА ПРИСОЕДИНЕНИЯ -->
                     <Button Content="Присоединиться"
                             Command="{Binding JoinRoomCommand}"
                             CommandParameter="{Binding Text, ElementName=RoomIdInput}"
@@ -410,7 +408,7 @@
                 </Grid>
             </Grid>
 
-            <!-- Правая панель - ручная расстановка кораблей (как в MainWindow) -->
+            <!-- Правая панель ручная расстановка кораблей -->
             <Border Grid.Column="2"
         Background="{StaticResource SecondaryBrush}"
         CornerRadius="10"

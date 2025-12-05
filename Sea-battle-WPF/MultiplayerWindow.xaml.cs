@@ -15,9 +15,6 @@ using System.Windows.Shapes;
 
 namespace Sea_battle_WPF
 {
-    /// <summary>
-    /// Логика взаимодействия для MultiplayerWindow.xaml
-    /// </summary>
     public partial class MultiplayerWindow : Window
     {
         public MultiplayerWindow()

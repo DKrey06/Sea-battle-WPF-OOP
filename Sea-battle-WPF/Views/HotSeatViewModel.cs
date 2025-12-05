@@ -235,28 +235,15 @@ namespace Sea_battle_WPF.ViewModels
             }
         }
 
-        // Показывать панель кораблей только когда:
-        // 1. Игра не началась
-        // 2. Текущий игрок еще не готов
         public bool ShouldShowShipPanel => !IsGameStarted && !CurrentPlayerReady;
-
-        // Показывать игровые поля когда:
-        // 1. Игра началась ИЛИ
-        // 2. Игрок расставляет корабли (не готов)
         public bool ShouldShowFields => IsGameStarted || !CurrentPlayerReady;
-
         public bool CanStartGame => !_isGameStarted && _isPlayer1Ready && _isPlayer2Ready;
         public bool CanPlaceShips => !_isGameStarted && !CurrentPlayerReady;
         public bool ShowGameControls => _isGameStarted;
         public bool ShowSetupControls => !_isGameStarted;
         public bool CanReady => !IsGameStarted && !IsDeviceLocked && IsCurrentPlacementValid;
-
-        // Текущие доступные корабли (зависит от игрока)
         public ObservableCollection<ShipViewModel> AvailableShips { get; } = new ObservableCollection<ShipViewModel>();
-
-        // Текущее поле игрока (видимое на экране)
         public ObservableCollection<CellViewModel> MyFieldCells { get; } = new ObservableCollection<CellViewModel>();
-        // Поле противника (куда стреляем)
         public ObservableCollection<CellViewModel> EnemyFieldCells { get; } = new ObservableCollection<CellViewModel>();
 
         public ICommand AutoArrangeCommand { get; }
@@ -321,7 +308,6 @@ namespace Sea_battle_WPF.ViewModels
             _player1ManualService.ShipRemoved += OnShipRemoved;
             _player2ManualService.ShipRemoved += OnShipRemoved;
 
-            // ДОБАВЛЯЕМ события для подсветки
             _player1ManualService.HighlightCellsRequested += OnHighlightCellsRequested;
             _player2ManualService.HighlightCellsRequested += OnHighlightCellsRequested;
             _player1ManualService.ClearHighlightRequested += OnClearHighlightRequested;
@@ -358,10 +344,8 @@ namespace Sea_battle_WPF.ViewModels
 
         private void OnHighlightCellsRequested(List<CellViewModel> cells)
         {
-            // Очищаем предыдущую подсветку
             ClearHighlights();
 
-            // Подсвечиваем новые клетки
             foreach (var cell in cells)
             {
                 var myCell = MyFieldCells.FirstOrDefault(c => c.X == cell.X && c.Y == cell.Y);
@@ -382,8 +366,6 @@ namespace Sea_battle_WPF.ViewModels
         {
             MyFieldCells.Clear();
             EnemyFieldCells.Clear();
-
-            // Изначально показываем поле Игрока 1
             UpdateFieldDisplay();
         }
 
@@ -418,7 +400,6 @@ namespace Sea_battle_WPF.ViewModels
 
             if (!IsGameStarted)
             {
-                // В фазе расстановки: показываем поле того игрока, который сейчас настраивает
                 if (!IsPlayer1Ready)
                 {
                     myField = _player1Field;
@@ -431,14 +412,12 @@ namespace Sea_battle_WPF.ViewModels
                 }
                 else
                 {
-                    // Оба игрока готовы - показываем пустые поля
                     myField = _player1Field;
                     enemyField = null;
                 }
             }
             else
             {
-                // В фазе игры: показываем поле текущего игрока
                 if (IsPlayer1Turn)
                 {
                     myField = _player1Field;
@@ -451,7 +430,6 @@ namespace Sea_battle_WPF.ViewModels
                 }
             }
 
-            // Заполняем "Мое поле"
             for (int y = 0; y < 10; y++)
             {
                 for (int x = 0; x < 10; x++)
@@ -461,7 +439,6 @@ namespace Sea_battle_WPF.ViewModels
                 }
             }
 
-            // Заполняем "Поле противника" (только если игра началась и есть вражеское поле)
             if (IsGameStarted && enemyField != null)
             {
                 for (int y = 0; y < 10; y++)
@@ -469,7 +446,6 @@ namespace Sea_battle_WPF.ViewModels
                     for (int x = 0; x < 10; x++)
                     {
                         var cellVM = new CellViewModel(x, y, enemyField.Cells[x, y], true);
-                        // Во время игры вражеские клетки должны быть кликабельны
                         cellVM.UpdateClickability(true);
                         EnemyFieldCells.Add(cellVM);
                     }
@@ -477,7 +453,6 @@ namespace Sea_battle_WPF.ViewModels
             }
         }
 
-        // Методы для ручной расстановки
         private void MyCellClickExecute(CellViewModel cellVM)
         {
             if (SelectedShip != null && ShouldShowShipPanel && !SelectedShip.IsPlaced)
@@ -487,7 +462,7 @@ namespace Sea_battle_WPF.ViewModels
                     if (_player1ManualService.TryPlaceShip(SelectedShip, cellVM.X, cellVM.Y))
                     {
                         UpdateFieldDisplay();
-                        ClearHighlights(); // ДОБАВИТЬ ЭТО
+                        ClearHighlights();
 
                         SelectedShip.IsPlaced = true;
                         var nextShip = _player1ManualService.GetUnplacedShips().FirstOrDefault();
@@ -500,7 +475,7 @@ namespace Sea_battle_WPF.ViewModels
                     if (_player2ManualService.TryPlaceShip(SelectedShip, cellVM.X, cellVM.Y))
                     {
                         UpdateFieldDisplay();
-                        ClearHighlights(); // ДОБАВИТЬ ЭТО
+                        ClearHighlights();
 
                         SelectedShip.IsPlaced = true;
                         var nextShip = _player2ManualService.GetUnplacedShips().FirstOrDefault();
@@ -515,7 +490,6 @@ namespace Sea_battle_WPF.ViewModels
         {
             if (SelectedShip != null && ShouldShowShipPanel && !SelectedShip.IsPlaced)
             {
-                // Очищаем предыдущую подсветку
                 ClearHighlights();
 
                 if (!IsPlayer1Ready)
@@ -550,7 +524,7 @@ namespace Sea_battle_WPF.ViewModels
         {
             if (ship == null || !ship.IsPlaced || !ShouldShowShipPanel) return;
 
-            ClearHighlights(); // ДОБАВИТЬ ЭТО
+            ClearHighlights();
 
             if (!IsPlayer1Ready)
             {
@@ -570,7 +544,7 @@ namespace Sea_battle_WPF.ViewModels
         {
             if (ship == null || !ShouldShowShipPanel) return;
 
-            ClearHighlights(); // ДОБАВИТЬ ЭТО
+            ClearHighlights();
 
             if (SelectedShip == ship)
             {
@@ -607,7 +581,7 @@ namespace Sea_battle_WPF.ViewModels
         {
             if (!ShouldShowShipPanel) return;
 
-            ClearHighlights(); // ДОБАВИТЬ ЭТО
+            ClearHighlights();
 
             if (!IsPlayer1Ready)
             {
@@ -638,7 +612,7 @@ namespace Sea_battle_WPF.ViewModels
         {
             if (!ShouldShowShipPanel) return;
 
-            ClearHighlights(); // ДОБАВИТЬ ЭТО
+            ClearHighlights();
 
             if (!IsPlayer1Ready)
             {
@@ -699,7 +673,6 @@ namespace Sea_battle_WPF.ViewModels
 
             GameField enemyField = IsPlayer1Turn ? _player2Field : _player1Field;
 
-            // Проверяем, можно ли стрелять в эту клетку
             if (enemyField.Cells[cellVM.X, cellVM.Y].State != CellState.Empty &&
                 enemyField.Cells[cellVM.X, cellVM.Y].State != CellState.Ship)
                 return;
@@ -712,11 +685,9 @@ namespace Sea_battle_WPF.ViewModels
 
             if (result == CellState.Miss)
             {
-                // Промах - блокируем устройство для передачи
                 IsDeviceLocked = true;
                 GameStatus = $"{currentPlayer} промахнулся!\nПередайте устройство {nextPlayer}";
 
-                // Отключаем кликабельность вражеских клеток
                 foreach (var enemyCell in EnemyFieldCells)
                 {
                     enemyCell.UpdateClickability(false);
@@ -724,10 +695,9 @@ namespace Sea_battle_WPF.ViewModels
             }
             else if (result == CellState.Hit || result == CellState.Sunk)
             {
-                // Попадание - продолжаем ход
                 if (result == CellState.Sunk)
                 {
-                    UpdateFieldDisplay(); // Обновляем отображение потопленного корабля
+                    UpdateFieldDisplay();
                     GameStatus = $"{currentPlayer} потопил корабль! Продолжайте ход";
                 }
                 else
@@ -735,7 +705,6 @@ namespace Sea_battle_WPF.ViewModels
                     GameStatus = $"{currentPlayer} попал! Продолжайте ход";
                 }
 
-                // Проверяем победу
                 if (enemyField.AllShipsSunk)
                 {
                     IsGameStarted = false;
@@ -757,7 +726,6 @@ namespace Sea_battle_WPF.ViewModels
 
         private void PassDevice()
         {
-            // Передача устройства другому игроку
             IsDeviceLocked = false;
 
             if (IsGameStarted)
@@ -765,7 +733,6 @@ namespace Sea_battle_WPF.ViewModels
                 IsPlayer1Turn = !IsPlayer1Turn;
                 UpdateFieldDisplay();
 
-                // Включаем кликабельность вражеских клеток для текущего игрока
                 foreach (var enemyCell in EnemyFieldCells)
                 {
                     enemyCell.UpdateClickability(true);
@@ -775,10 +742,8 @@ namespace Sea_battle_WPF.ViewModels
             }
             else
             {
-                // В фазе расстановки
                 if (IsPlayer1Ready && !IsPlayer2Ready)
                 {
-                    // Переход от игрока 1 к игроку 2
                     InitializeAvailableShips();
                     UpdateFieldDisplay();
                     GameStatus = "Игрок 2: расставьте корабли";

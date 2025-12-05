@@ -61,7 +61,7 @@
                         VerticalAlignment="Center"
                         Margin="0,0,10,0">
 
-                <!-- Кнопка Назад (как в HotSeat) -->
+                <!-- Кнопка Назад -->
                 <Button Content="← Назад"
                         Style="{StaticResource ModernButton}"
                         Width="80"
@@ -92,7 +92,6 @@
 
         </DockPanel>
 
-        <!-- Остальной код остается без изменений -->
         <!-- Основное содержимое -->
         <Grid Grid.Row="1" Margin="20">
             <!-- Добавляем новую колонку для панели кораблей -->
@@ -123,7 +122,7 @@
                     <Style TargetType="Border">
                         <Setter Property="Visibility" Value="Visible"/>
                         <Style.Triggers>
-                            <!-- Скрываем, если НЕ режим ручной расстановки -->
+                            <!-- Скрываем, если не режим ручной расстановки -->
                             <DataTrigger Binding="{Binding IsManualPlacementMode}" Value="False">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                             </DataTrigger>
@@ -427,7 +426,7 @@
                        Fill="Transparent"
                        Width="10"/>
 
-            <!-- Левое поле (теперь в колонке 2) -->
+            <!-- Левое поле -->
             <Border Grid.Column="2" 
                     Background="{StaticResource WaterBrush}"
                     CornerRadius="10"
@@ -508,7 +507,7 @@
                 </Grid>
             </Border>
 
-            <!-- Разделитель между полями (теперь в колонке 3) -->
+            <!-- Разделитель между полями -->
             <Rectangle Grid.Column="3" 
                        Fill="{StaticResource AccentBrush}"
                        Width="3" 
@@ -517,7 +516,7 @@
                        VerticalAlignment="Stretch"
                        Margin="0,50"/>
 
-            <!-- Правое поле противника (теперь в колонке 4) -->
+            <!-- Правое поле противника -->
             <Border Grid.Column="4" 
                     Background="{StaticResource WaterBrush}"
                     CornerRadius="10"
@@ -751,6 +750,5 @@
                 </StackPanel>
             </Border>
         </Border>
-
     </Grid>
 </Window>

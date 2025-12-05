@@ -19,7 +19,6 @@ namespace Sea_battle_WPF.Core.Services
         public string CurrentTurnPlayerId { get; private set; }
         public bool IsMyTurn => CurrentTurnPlayerId == PlayerId;
 
-        // Существующие события
         public event Action<string> OnRoomCreated;
         public event Action<string> OnRoomJoined;
         public event Action<string> OnPlayerJoined;
@@ -29,10 +28,9 @@ namespace Sea_battle_WPF.Core.Services
         public event Action<string> OnGameOver;
         public event Action<string> OnError;
 
-        // НОВЫЕ события
         public event Action<string> OnPlayerReady;
         public event Action<string> OnPlayerDisconnected;
-        public event Action<string> OnShipsPlacedNotify; // Новое событие
+        public event Action<string> OnShipsPlacedNotify;
 
         public async Task<bool> Connect(string serverIp = "127.0.0.1", int port = 8888)
         {
@@ -109,17 +107,14 @@ namespace Sea_battle_WPF.Core.Services
                         break;
 
                     case "PLAYER_READY":
-                        // НОВОЕ: Обработка готовности игрока
                         OnPlayerReady?.Invoke(gameMessage.Data);
                         break;
 
                     case "SHIPS_PLACED_NOTIFY":
-                        // НОВОЕ: Обработка уведомления о расстановке кораблей
                         OnShipsPlacedNotify?.Invoke(gameMessage.Data);
                         break;
 
                     case "PLAYER_DISCONNECTED":
-                        // НОВОЕ: Обработка отключения игрока
                         OnPlayerDisconnected?.Invoke(gameMessage.Data);
                         break;
 

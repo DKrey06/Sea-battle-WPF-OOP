@@ -15,7 +15,6 @@
         Background="{StaticResource PrimaryBrush}">
 
     <Window.Resources>
-        <!-- Используем ваши конвертеры -->
         <local:BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <local:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVis"/>
         <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
@@ -104,7 +103,7 @@
               Margin="20"
               Visibility="{Binding ShouldShowFields, Converter={StaticResource BoolToVis}}">
 
-            <!-- Новая колонка для панели кораблей как в MainWindow -->
+            <!-- Новая колонка для панели кораблей -->
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="250"/>
                 <!-- Колонка для панели кораблей -->
@@ -118,7 +117,7 @@
                 <!-- Правое поле -->
             </Grid.ColumnDefinitions>
 
-            <!-- ПАНЕЛЬ РУЧНОЙ РАССТАНОВКИ КОРАБЛЕЙ (только при расстановке) -->
+            <!-- ПАНЕЛЬ РУЧНОЙ РАССТАНОВКИ КОРАБЛЕЙ -->
             <Border Grid.Column="0"
                     Background="{StaticResource SecondaryBrush}"
                     CornerRadius="10"

@@ -104,7 +104,6 @@ namespace Sea_battle_WPF.ViewModels
         public ObservableCollection<ShipViewModel> AvailableShips { get; } = new ObservableCollection<ShipViewModel>();
         public ObservableCollection<CellViewModel> PlayerCells { get; } = new ObservableCollection<CellViewModel>();
         public ObservableCollection<CellViewModel> EnemyCells { get; } = new ObservableCollection<CellViewModel>();
-
         public bool IsEasyAI => SelectedAILevel == AILevel.Easy;
         public bool IsSmartAI => SelectedAILevel == AILevel.Hard;
         public bool IsGameStarted { get; private set; }
@@ -551,7 +550,6 @@ namespace Sea_battle_WPF.ViewModels
 
         private void OnHighlightCellsRequested(List<CellViewModel> cells)
         {
-            // Уже обрабатывается в CellViewModel
         }
 
         private void OnClearHighlightRequested()

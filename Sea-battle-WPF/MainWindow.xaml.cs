@@ -73,7 +73,6 @@ namespace Sea_battle_WPF
         }
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
-            // Возвращаемся в стартовое окно
             var startWindow = new StartWindow();
             startWindow.Show();
             this.Close();

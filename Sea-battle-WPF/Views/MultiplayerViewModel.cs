@@ -35,8 +35,6 @@ namespace Sea_battle_WPF.ViewModels
         private ShipViewModel _selectedShip;
         private bool _isManualPlacementMode = true;
         private bool _isManualPlacementValid;
-
-        // Добавляем новые свойства для блокировки кнопок
         public bool CanCreateRoom => IsConnected && !IsGameStarted && !IsReady;
         public bool CanJoinRoom => IsConnected && !IsGameStarted && !IsReady;
 
@@ -399,7 +397,6 @@ namespace Sea_battle_WPF.ViewModels
                 {
                     if (shot.PlayerId == _networkService.PlayerId)
                     {
-                        // Наш выстрел
                         var cell = _game.EnemyField.Cells[shot.X, shot.Y];
                         cell.State = shot.IsHit ? CellState.Hit : CellState.Miss;
 
@@ -408,7 +405,6 @@ namespace Sea_battle_WPF.ViewModels
 
                         GameStatus = shot.IsHit ? "Вы попали! Делайте следующий выстрел" : "Вы промахнулись";
 
-                        // ПРИ ПОПАДАНИИ - оставляем клетки активными для следующего выстрела
                         if (shot.IsHit)
                         {
                             UpdateEnemyCellsClickability(true);
@@ -416,7 +412,6 @@ namespace Sea_battle_WPF.ViewModels
                     }
                     else
                     {
-                        // Выстрел противника
                         var cell = _game.PlayerField.Cells[shot.X, shot.Y];
                         if (shot.IsHit)
                         {
@@ -432,7 +427,6 @@ namespace Sea_battle_WPF.ViewModels
                         var cellVM = PlayerCells.First(c => c.X == shot.X && c.Y == shot.Y);
                         cellVM.UpdateFromModel();
 
-                        // Проверка проигрыша
                         if (_game.PlayerField.AllShipsSunk)
                         {
                             GameStatus = "Вы проиграли!";
@@ -535,12 +529,9 @@ namespace Sea_battle_WPF.ViewModels
         {
             if (IsConnected && RoomId != null && !IsReady && IsManualPlacementValid)
             {
-                // Сначала отправляем корабли
                 var ships = ConvertShipsToNetworkFormat();
                 _networkService.SendShips(ships);
                 _shipsSent = true;
-
-                // Затем сообщаем о готовности
                 _networkService.SetReady();
                 IsReady = true;
 
@@ -660,7 +651,6 @@ namespace Sea_battle_WPF.ViewModels
             }
         }
 
-        // Методы для ручной расстановки кораблей
         private void PlayerCellClickExecute(CellViewModel cellVM)
         {
             if (SelectedShip != null && IsManualPlacementMode && !SelectedShip.IsPlaced && !IsReady)
@@ -832,7 +822,6 @@ namespace Sea_battle_WPF.ViewModels
 
         private void OnHighlightCellsRequested(List<CellViewModel> cells)
         {
-            // Уже обрабатывается в CellViewModel
         }
 
         private void OnClearHighlightRequested()
