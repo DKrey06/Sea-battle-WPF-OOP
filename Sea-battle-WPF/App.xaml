@@ -2,8 +2,20 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Sea_battle_WPF"
-             StartupUri="MainWindow.xaml">
+             xmlns:viewmodels="clr-namespace:Sea_battle_WPF.ViewModels"
+             StartupUri="StartWindow.xaml">
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources.xaml"/>
+                
+            </ResourceDictionary.MergedDictionaries>
+            <local:BoolToReadyConverter x:Key="BoolToReadyConverter"/>
+            <local:ReadyColorConverter x:Key="ReadyColorConverter"/>
+
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+            <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+            
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -1,0 +1,90 @@
+﻿<Window x:Class="Sea_battle_WPF.StartWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Sea battle - Start Game" 
+        Height="550" 
+        Width="400"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="{StaticResource PrimaryBrush}">
+
+    <Window.Resources>
+        <ResourceDictionary Source="Resources.xaml"/>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Лого -->
+        <Image Grid.Row="0" 
+               Source="/Images/FunCat4.png" 
+               Width="150" 
+               Height="150" 
+               Margin="0,10,18,52"
+               HorizontalAlignment="Center"/>
+
+        <!-- Заголовок -->
+        <TextBlock
+                   Text="SEA BATTLE"
+                   FontFamily="Comic Sans MS"
+                   Foreground="Black"
+                   FontSize="40"
+                   FontWeight="Bold"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Top"
+                   Margin="0,149,0,0"
+                   TextAlignment="Center" Grid.RowSpan="2"/>
+
+        <!-- Кнопки -->
+        <StackPanel Grid.Row="2" 
+            VerticalAlignment="Center" 
+            HorizontalAlignment="Center"
+            Width="250">
+
+            <Button Content="🎮 Играть с компьютером" 
+            Style="{StaticResource ModernButton}"
+            Height="50"
+            FontSize="16"
+            Click="StartSinglePlayer_Click"/>
+
+            <!-- НОВАЯ КНОПКА -->
+            <Button Content="👥 Локальная игра" 
+            Style="{StaticResource ModernButton}"
+            Height="50"
+            FontSize="16"
+            Click="StartHotSeat_Click"/>
+
+            <Button Content="🌐 Играть по сети" 
+            Style="{StaticResource ModernButton}"
+            Height="50"
+            FontSize="16"
+            Click="StartMultiplayer_Click"/>
+
+            <Button Content="🚪 Выйти" 
+            Style="{StaticResource ModernButton}"
+            Height="50"
+            FontSize="16"
+            Margin="5"
+            Click="ExitButton_Click"/>
+
+        </StackPanel>
+
+        <!-- Нижняя панелька -->
+        <Border Grid.Row="3" 
+                Background="{StaticResource AccentBrush}"
+                CornerRadius="10,10,0,0" Margin="0,10,0,0">
+            <TextBlock Text="By DKrey and Yanl1n, 2025" 
+                       Foreground="{StaticResource TextBrush}"
+                       FontSize="16"
+                       FontStyle="Italic"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+        </Border>
+
+    </Grid>
+</Window>
